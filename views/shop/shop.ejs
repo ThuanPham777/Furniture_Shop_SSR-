@@ -1,0 +1,180 @@
+<div class="shop-page py-14 px-6">
+    <!-- Sort Section -->
+    <div class="text-right mb-6">
+        <form id="sortForm" method="GET" action="/shop">
+            <label>
+                <select name="sort" onchange="updateQueryParams(this)"
+                    class="filter-dropdown border focus:outline-none focus:ring-2 py-2">
+                    <option value="" <%=!filters?.sort ? 'selected' : '' %>>Sort By</option>
+                    <option value="price-asc" <%=filters?.sort==='price-asc' ? 'selected' : '' %>>Price: Low to High
+                    </option>
+                    <option value="price-desc" <%=filters?.sort==='price-desc' ? 'selected' : '' %>>Price: High to Low
+                    </option>
+                    <option value="name-asc" <%=filters?.sort==='name-asc' ? 'selected' : '' %>>Name: A to Z</option>
+                    <option value="name-desc" <%=filters?.sort==='name-desc' ? 'selected' : '' %>>Name: Z to A</option>
+                    <option value="createdAt-asc" <%=filters?.sort==='createdAt-asc' ? 'selected' : '' %>>New: Old to
+                        New</option>
+                    <option value="createdAt-desc" <%=filters?.sort==='createdAt-desc' ? 'selected' : '' %>>New: New to
+                        Old</option>
+                </select>
+            </label>
+        </form>
+    </div>
+
+    <div class="flex flex-col lg:flex-row">
+        <!-- Filter Section -->
+        <div class="w-full lg:w-1/4 p-4 mb-6 lg:mb-0">
+            <h2 class="text-2xl font-semibold mb-4">Filter Products</h2>
+            <form id="filterForm" method="GET" action="/shop">
+                <!-- Price Filter -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Price</h3>
+                    <div class="flex flex-col gap-4 sm:flex-row sm:gap-6">
+                        <div class="flex flex-col w-full">
+                            <label for="minPrice" class="text-sm font-medium">Min Price</label>
+                            <input type="number" id="minPrice" name="minPrice" placeholder="Min Price"
+                                value="<%= filters?.minPrice || '' %>"
+                                class="filter-input px-4 py-2 border rounded-md w-full"
+                                onchange="updateRangeFilter('minPrice', this.value)" />
+                        </div>
+                        <div class="flex flex-col w-full">
+                            <label for="maxPrice" class="text-sm font-medium">Max Price</label>
+                            <input type="number" id="maxPrice" name="maxPrice" placeholder="Max Price"
+                                value="<%= filters?.maxPrice || '' %>"
+                                class="filter-input px-4 py-2 border rounded-md w-full"
+                                onchange="updateRangeFilter('maxPrice', this.value)" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold">Category</h3>
+                    <div class="flex flex-col">
+                        <% ['Lamps', 'Tables' , 'Chairs' , 'Dressers' , 'Cots' , 'Night Stands' , 'Sofas' , 'Shelves'
+                            ].forEach(category=> { %>
+                            <label>
+                                <input type="checkbox" name="category" value="<%= category %>"
+                                    <%=filters?.category?.includes(category) ? 'checked' : '' %>
+                                onchange="updateCheckboxFilter(this)" />
+                                <%= category %>
+                            </label>
+                            <% }); %>
+                    </div>
+                </div>
+
+                <!-- Manufacturer Filter -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold">Manufacturer</h3>
+                    <div class="flex flex-col">
+                        <% ['IKEA', 'Vitra' , 'Herman Miller' , 'Knoll' , 'Haworth' , 'Maiden Home'
+                            ].forEach(manufacturer=> { %>
+                            <label>
+                                <input type="checkbox" name="manufacturer" value="<%= manufacturer %>"
+                                    <%=filters?.manufacturer?.includes(manufacturer) ? 'checked' : '' %>
+                                onchange="updateCheckboxFilter(this)" />
+                                <%= manufacturer %>
+                            </label>
+                            <% }); %>
+                    </div>
+                </div>
+
+                <!-- Material Filter -->
+                <div>
+                    <h3 class="text-lg font-semibold">Material</h3>
+                    <div class="flex flex-col">
+                        <% ['Wood', 'Plastic' , 'Metal' , 'Fabric' , 'Glass' , 'Ceramic' ].forEach(material=> { %>
+                            <label>
+                                <input type="checkbox" name="material" value="<%= material %>"
+                                    <%=filters?.material?.includes(material) ? 'checked' : '' %>
+                                onchange="updateCheckboxFilter(this)" />
+                                <%= material %>
+                            </label>
+                            <% }); %>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Products List -->
+        <div class="w-full lg:w-3/4 p-4" id="productListContainer">
+            <h1 class="text-3xl font-bold mb-8">Our Products</h1>
+            <%- include('../partials/productList') %>
+
+                <!-- Pagination Section -->
+                <div class="pagination mt-8 flex justify-center items-center gap-2">
+                    <% if (currentPage> 1) { %>
+                        <a href="?page=<%= currentPage - 1 %>&<%= Object.keys(filters).map(key => key + '=' + filters[key]).join('&') %>"
+                            class="px-3 py-1 border rounded hover:bg-gray-200">Previous</a>
+                        <% } %>
+
+                            <% for (let i=1; i <=totalPages; i++) { %>
+                                <a href="?page=<%= i %>&<%= Object.keys(filters).map(key => key + '=' + filters[key]).join('&') %>"
+                                    class="<%= currentPage === i ? 'bg-lime-500 text-white px-4 py-2 rounded' : 'px-3 py-1 border rounded hover:bg-gray-200' %>">
+                                    <%= i %>
+                                </a>
+                                <% } %>
+
+                                    <% if (currentPage < totalPages) { %>
+                                        <a href="?page=<%= currentPage + 1 %>&<%= Object.keys(filters).map(key => key + '=' + filters[key]).join('&') %>"
+                                            class="px-3 py-1 border rounded hover:bg-gray-200">Next</a>
+                                        <% } %>
+                </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function updateCheckboxFilter(checkbox) {
+        const url = new URL(window.location.href); // Lấy URL hiện tại
+        const params = new URLSearchParams(url.search); // Tạo một đối tượng URLSearchParams để thao tác với các tham số query
+
+        const name = checkbox.name; // Tên của filter (ví dụ: category)
+        const value = checkbox.value; // Giá trị của filter (ví dụ: 'Chairs')
+
+        if (checkbox.checked) {
+            params.append(name, value); // Nếu checkbox được chọn, thêm giá trị vào query params
+        } else {
+            const values = params.getAll(name).filter(v => v !== value); // Nếu checkbox bị bỏ chọn, loại bỏ giá trị này khỏi query params
+            params.delete(name); // Xóa cũ đi và thêm lại các giá trị còn lại
+            values.forEach(v => params.append(name, v));
+        }
+
+        // Cập nhật URL và điều hướng trang với các tham số filter mới
+        const newUrl = `${url.pathname}?${params.toString()}`;
+        window.location.href = newUrl; // Điều hướng trang đến URL mới
+    }
+
+
+    function updateRangeFilter(name, value) {
+        const url = new URL(window.location.href);
+        const params = new URLSearchParams(url.search);
+
+        if (value) {
+            params.set(name, value); // Cập nhật giá trị filter nếu có
+        } else {
+            params.delete(name); // Nếu không có giá trị (empty), xóa tham số filter
+        }
+
+        const newUrl = `${url.pathname}?${params.toString()}`;
+        window.location.href = newUrl;
+    }
+
+    function updateQueryParams(selectElement) {
+        const url = new URL(window.location.href); // Lấy URL hiện tại
+        const params = new URLSearchParams(url.search); // Tạo một đối tượng URLSearchParams để thao tác với các tham số query
+
+        const value = selectElement.value; // Giá trị chọn trong dropdown
+
+        if (value) {
+            params.set("sort", value); // Cập nhật tham số sort trong URL với giá trị đã chọn
+        } else {
+            params.delete("sort"); // Nếu không có giá trị, xóa tham số sort khỏi URL
+        }
+
+        // Cập nhật URL mới và điều hướng trang
+        const newUrl = `${url.pathname}?${params.toString()}`;
+        window.location.href = newUrl; // Điều hướng trang đến URL mới
+    }
+</script>
