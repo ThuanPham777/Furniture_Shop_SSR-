@@ -1,5 +1,11 @@
 <div class="w-full max-w-md my-6 mx-auto bg-white shadow-md rounded-lg p-6">
     <h2 class="text-2xl font-bold text-center mb-6">Login</h2>
+
+    <!-- Error Message (if exists) -->
+    <div id="errorMessage" class="text-red-600 text-center mb-4 hidden">
+        <p id="errorText" class="font-medium"></p>
+    </div>
+
     <!-- login Form -->
     <form id="loginForm" action="/login" method="POST">
         <!-- Email Field -->
@@ -22,15 +28,23 @@
         <!-- Submit Button -->
         <button type="submit"
             class="w-full bg-lime-500 text-white py-2 px-4 rounded-lg hover:bg-lime-600 focus:outline-none">
-            login
+            Login
         </button>
     </form>
 
-    <!-- Additional Links -->
-    <div class="mt-6 text-center">
-        <p class="text-gray-600 mt-2">
-            Don't have an account?
-            <a href="/signup" class="text-lime-500 hover:underline">Sign Up</a>
-        </p>
-    </div>
+    <!-- Display error message if exists -->
+    <% if (error) { %>
+        <script>
+            document.getElementById('errorText').textContent = "<%= error %>";
+            document.getElementById('errorMessage').classList.remove('hidden');
+        </script>
+        <% } %>
+
+            <!-- Additional Links -->
+            <div class="mt-6 text-center">
+                <p class="text-gray-600 mt-2">
+                    Don't have an account?
+                    <a href="/signup" class="text-lime-500 hover:underline">Sign Up</a>
+                </p>
+            </div>
 </div>

@@ -3,10 +3,10 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 
 // Trang đăng ký
-router.get('/signup', (req, res) => res.render('auth/signup'));
+router.get('/signup', (req, res) => res.render('auth/signup', { error: '' }));
 
 // Trang đăng nhập
-router.get('/login', (req, res) => res.render('auth/login'));
+router.get('/login', (req, res) => res.render('auth/login', { error: '' }));
 
 // Xử lý đăng ký
 router.post('/signup', userController.signup);

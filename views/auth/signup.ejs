@@ -2,6 +2,11 @@
 <div class="w-full max-w-md my-6 mx-auto bg-white shadow-md rounded-lg p-6">
     <h1 class="text-2xl font-bold text-gray-800 text-center mb-6">Create an Account</h1>
 
+    <!-- Error Message (if exists) -->
+    <div id="errorMessage" class="text-red-600 text-center mb-4 hidden">
+        <p id="errorText" class="font-medium"></p>
+    </div>
+
     <!-- signup Form -->
     <form id="signupForm" action="/signup" method="POST" class="space-y-4">
         <!-- Username -->
@@ -39,8 +44,16 @@
         </button>
     </form>
 
-    <!-- Already have an account -->
-    <p class="text-sm text-center text-gray-600 mt-4">
-        Already have an account? <a href="/login" class="text-lime-500 hover:underline">Log In</a>
-    </p>
+    <!-- Display error message if exists -->
+    <% if (error) { %>
+        <script>
+            document.getElementById('errorText').textContent = "<%= error %>";
+            document.getElementById('errorMessage').classList.remove('hidden');
+        </script>
+        <% } %>
+
+            <!-- Already have an account -->
+            <p class="text-sm text-center text-gray-600 mt-4">
+                Already have an account? <a href="/login" class="text-lime-500 hover:underline">Log In</a>
+            </p>
 </div>

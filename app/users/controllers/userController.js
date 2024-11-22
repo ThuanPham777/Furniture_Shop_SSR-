@@ -7,18 +7,30 @@ exports.signup = async (req, res) => {
   const { username, email, password, passwordConfirm } = req.body;
 
   try {
-    // Check if passwords match
+    // Kiểm tra xem mật khẩu có trùng khớp không
     if (password !== passwordConfirm) {
-      return res.redirect('/signup');
+      return res.render('auth/signup', {
+        error: 'Mật khẩu xác nhận không trùng khớp',
+      });
     }
 
-    // Check if email already exists
+    // Kiểm tra email đã tồn tại chưa
     const userExists = await userService.findUserByEmail(email);
     if (userExists) {
-      return res.redirect('/signup');
+      return res.render('auth/signup', { error: 'Email đã được sử dụng' });
     }
 
-    // Create new user (password will be hashed in pre('save') middleware)
+    // Kiểm tra mật khẩu phức tạp
+    const passwordRegex =
+      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.render('auth/signup', {
+        error:
+          'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
+      });
+    }
+
+    // Tạo người dùng mới (mật khẩu sẽ được mã hóa trong middleware pre('save'))
     await userService.createUser({
       username,
       email,
@@ -28,7 +40,7 @@ exports.signup = async (req, res) => {
     res.redirect('/login');
   } catch (err) {
     console.error(err);
-    res.redirect('/signup');
+    res.render('auth/signup', { error: 'Có lỗi xảy ra, vui lòng thử lại!' });
   }
 };
 
@@ -41,7 +53,7 @@ exports.login = (req, res, next) => {
     }
     if (!user) {
       console.error('Authentication failed:', info.message);
-      return res.redirect('/login');
+      return res.render('auth/login', { error: 'Invalid email or password' }); // Truyền lỗi vào view
     }
     req.logIn(user, (err) => {
       if (err) {
