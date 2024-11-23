@@ -16,13 +16,17 @@ const userSchema = new mongoose.Schema(
     country: { type: String, default: 'Vietnam' },
     password: {
       type: String,
-      required: [true, 'User password is required'],
+      required: function () {
+        return !this.googleId; // Password is required only if googleId is not present
+      },
     },
     isActive: { type: Boolean, default: false }, // Trạng thái kích hoạt
     activationToken: String,
     activationTokenExpires: Date, // Thời gian hết hạn token
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+
+    googleId: { type: String, unique: true, sparse: true }, // For Google OAuth
   },
   {
     timestamps: true,

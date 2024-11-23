@@ -1,8 +1,10 @@
 const LocalStrategy = require('passport-local').Strategy;
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const bcrypt = require('bcryptjs');
 const User = require('../app/users/models/userModel');
-
+require('dotenv').config({ path: '.env.google' });
 module.exports = (passport) => {
+  // local strategy
   passport.use(
     new LocalStrategy(
       {
@@ -33,6 +35,42 @@ module.exports = (passport) => {
 
           // Xác thực thành công
           return done(null, user);
+        } catch (err) {
+          return done(err);
+        }
+      }
+    )
+  );
+
+  // google oauth
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: 'http://localhost:5000/auth/google/callback',
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          // Check if the user already exists
+          const existingUser = await User.findOne({ googleId: profile.id });
+
+          if (existingUser) {
+            return done(null, existingUser); // User exists, proceed to login
+          }
+
+          // Create a new user if not exists
+          const newUser = await User.create({
+            googleId: profile.id,
+            email: profile.emails?.[0]?.value || null,
+            username: profile.displayName,
+            avatarUrl: profile.photos?.[0]?.value || null,
+            firstName: profile.name?.givenName || '',
+            lastName: profile.name?.familyName || '',
+            isActive: true, // Auto-activate Google accounts
+          });
+
+          return done(null, newUser);
         } catch (err) {
           return done(err);
         }

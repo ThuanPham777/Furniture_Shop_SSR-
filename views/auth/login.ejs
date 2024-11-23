@@ -2,12 +2,13 @@
     <h2 class="text-2xl font-bold text-center mb-6">Login</h2>
 
     <% if (typeof message !=='undefined' && message) { %>
-        <div class="text-center mb-4 p-3 rounded-lgbg-green-100 text-green-600">
-            <p class="font-medium ">
+        <div class="text-center mb-4 p-3 rounded-lg bg-green-100 text-green-600">
+            <p class="font-medium">
                 <%= message %>
             </p>
         </div>
         <% } %>
+
             <!-- Error Message (if exists) -->
             <div id="errorMessage" class="text-red-600 text-center mb-4 hidden">
                 <p id="errorText" class="font-medium"></p>
@@ -39,13 +40,23 @@
                 </button>
             </form>
 
-            <!-- Display error message if exists -->
-            <% if (typeof error !== 'undefined' && error) { %>
+            <% if (typeof error !=='undefined' && error) { %>
                 <script>
                     document.getElementById('errorText').textContent = "<%= error %>";
                     document.getElementById('errorMessage').classList.remove('hidden');
                 </script>
                 <% } %>
+
+                    <!-- Google Sign Up Button -->
+                    <div class="my-6">
+                        <a href="/auth/google">
+                            <button
+                                class="w-full flex items-center justify-center bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg shadow hover:bg-gray-100 focus:outline-none space-x-2">
+                                <img src="/img/google.png" alt="google" class="w-8 h-8">
+                                <p>Sign Up with Google</p>
+                            </button>
+                        </a>
+                    </div>
 
                     <!-- Additional Links -->
                     <div class="mt-6 text-center">

@@ -3,7 +3,7 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const userService = require('../services/userService');
 const crypto = require('crypto');
-
+const passport = require('passport');
 // Trang đăng ký
 router.get('/signup', (req, res) => res.render('auth/signup'));
 
@@ -45,5 +45,21 @@ router.get('/reset-password/:token', async (req, res) => {
 });
 
 router.post('/reset-password/:token', userController.resetPassword);
+
+// Google Login Route
+router.get(
+  '/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+// Google Callback Route
+router.get(
+  '/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    // Successful login, redirect to home
+    res.redirect('/');
+  }
+);
 
 module.exports = router;
