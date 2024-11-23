@@ -2,6 +2,7 @@
 const passport = require('passport');
 const userService = require('../services/userService'); // Import user service
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 exports.signup = async (req, res) => {
   const { username, email, password, passwordConfirm } = req.body;
@@ -46,6 +47,39 @@ exports.signup = async (req, res) => {
   }
 };
 
+// Xử lý đăng nhập
+exports.login = (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if (err) {
+      console.error('Error during authentication:', err);
+      return res.redirect('/login');
+    }
+    if (!user) {
+      console.error('Authentication failed:', info.message);
+      return res.render('auth/login', { error: info.message }); // Truyền lỗi vào view
+    }
+
+    req.logIn(user, (err) => {
+      if (err) {
+        console.error('Error logging in:', err);
+        return res.redirect('/login');
+      }
+      res.redirect('/'); // Redirect on success
+    });
+  })(req, res, next);
+};
+
+// Xử lý đăng xuất
+exports.logout = (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      console.error(err);
+      return res.redirect('/');
+    }
+    res.redirect('/login');
+  });
+};
+
 exports.activateAccount = async (req, res) => {
   const { token } = req.params;
 
@@ -81,35 +115,69 @@ exports.activateAccount = async (req, res) => {
   }
 };
 
-// Xử lý đăng nhập
-exports.login = (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => {
-    if (err) {
-      console.error('Error during authentication:', err);
-      return res.redirect('/login');
-    }
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await userService.findUserByEmail(email);
     if (!user) {
-      console.error('Authentication failed:', info.message);
-      return res.render('auth/login', { error: info.message }); // Truyền lỗi vào view
+      return res.render('auth/forgot-password', {
+        error: 'Email không tồn tại!',
+      });
     }
 
-    req.logIn(user, (err) => {
-      if (err) {
-        console.error('Error logging in:', err);
-        return res.redirect('/login');
-      }
-      res.redirect('/'); // Redirect on success
+    // Generate reset token
+    const resetToken = user.createPasswordResetToken();
+    await user.save({ validateBeforeSave: false });
+
+    // Send email with reset link
+    await userService.sendPasswordResetEmail(email, resetToken, req);
+
+    res.render('auth/forgot-password', {
+      message: 'Email đặt lại mật khẩu đã được gửi!',
     });
-  })(req, res, next);
+  } catch (err) {
+    console.error(err);
+    res.render('auth/forgot-password', {
+      error: 'Đã xảy ra lỗi. Vui lòng thử lại!',
+    });
+  }
 };
 
-// Xử lý đăng xuất
-exports.logout = (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      console.error(err);
-      return res.redirect('/');
+exports.resetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password, passwordConfirm } = req.body;
+
+  try {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await userService.findUserByResetToken(hashedToken);
+
+    if (!user) {
+      return res.render('auth/reset-password', {
+        error: 'Liên kết không hợp lệ hoặc đã hết hạn!',
+      });
     }
+
+    if (password !== passwordConfirm) {
+      return res.render('auth/reset-password', {
+        token,
+        error: 'Mật khẩu không khớp!',
+      });
+    }
+
+    // Update password (hash password in userSechema)
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
     res.redirect('/login');
-  });
+  } catch (err) {
+    console.error(err);
+    res.render('auth/reset-password', {
+      token,
+      error: 'Đã xảy ra lỗi. Vui lòng thử lại!',
+    });
+  }
 };

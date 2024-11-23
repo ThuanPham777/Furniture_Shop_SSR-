@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: false }, // Trạng thái kích hoạt
     activationToken: String,
     activationTokenExpires: Date, // Thời gian hết hạn token
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
   },
   {
     timestamps: true,
@@ -43,6 +45,17 @@ userSchema.methods.createActivationToken = function () {
     .digest('hex');
   this.activationTokenExpires = Date.now() + 10 * 60 * 1000; // Token hết hạn sau 10 phút
   return token;
+};
+
+// Tạo token đặt lại mật khẩu
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  this.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // Token expires in 10 minutes
+  return resetToken;
 };
 
 module.exports = mongoose.model('User', userSchema);
