@@ -11,19 +11,27 @@ module.exports = (passport) => {
       },
       async (email, password, done) => {
         try {
-          // Find user by email
+          // Tìm người dùng bằng email
           const user = await User.findOne({ email });
           if (!user) {
-            return done(null, false, { message: 'Email not registered' });
+            return done(null, false, { message: 'Email không tồn tại' });
           }
 
-          // Check password
+          // Kiểm tra tài khoản đã kích hoạt chưa
+          if (!user.isActive) {
+            return done(null, false, {
+              message:
+                'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt tài khoản.',
+            });
+          }
+
+          // So sánh mật khẩu
           const isMatch = await bcrypt.compare(password, user.password);
           if (!isMatch) {
-            return done(null, false, { message: 'Incorrect password' });
+            return done(null, false, { message: 'Mật khẩu không đúng' });
           }
 
-          // Successful authentication
+          // Xác thực thành công
           return done(null, user);
         } catch (err) {
           return done(err);

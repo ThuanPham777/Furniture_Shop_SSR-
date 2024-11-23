@@ -2,6 +2,14 @@
 <div class="w-full max-w-md my-6 mx-auto bg-white shadow-md rounded-lg p-6">
     <h1 class="text-2xl font-bold text-gray-800 text-center mb-6">Create an Account</h1>
 
+    <% if (typeof message !== 'undefined' && message) { %>
+        <div class="text-center mb-4 p-3 rounded-lgbg-green-100 text-green-600">
+            <p class="font-medium ">
+                <%= message %>
+            </p>
+        </div>
+        <% } %>
+
     <!-- Error Message (if exists) -->
     <div id="errorMessage" class="text-red-600 text-center mb-4 hidden">
         <p id="errorText" class="font-medium"></p>
@@ -45,7 +53,7 @@
     </form>
 
     <!-- Display error message if exists -->
-    <% if (error) { %>
+    <% if (typeof error !== 'undefined' && error) { %>
         <script>
             document.getElementById('errorText').textContent = "<%= error %>";
             document.getElementById('errorMessage').classList.remove('hidden');

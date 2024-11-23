@@ -1,26 +1,23 @@
 // controllers/userController.js
-const bcrypt = require('bcryptjs');
 const passport = require('passport');
 const userService = require('../services/userService'); // Import user service
+const crypto = require('crypto');
 
 exports.signup = async (req, res) => {
   const { username, email, password, passwordConfirm } = req.body;
 
   try {
-    // Kiểm tra xem mật khẩu có trùng khớp không
     if (password !== passwordConfirm) {
       return res.render('auth/signup', {
         error: 'Mật khẩu xác nhận không trùng khớp',
       });
     }
 
-    // Kiểm tra email đã tồn tại chưa
     const userExists = await userService.findUserByEmail(email);
     if (userExists) {
       return res.render('auth/signup', { error: 'Email đã được sử dụng' });
     }
 
-    // Kiểm tra mật khẩu phức tạp
     const passwordRegex =
       /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     if (!passwordRegex.test(password)) {
@@ -30,17 +27,57 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // Tạo người dùng mới (mật khẩu sẽ được mã hóa trong middleware pre('save'))
-    await userService.createUser({
-      username,
-      email,
-      password,
-    });
+    const user = await userService.createUser({ username, email, password });
 
-    res.redirect('/login');
+    // Tạo token và lưu vào cơ sở dữ liệu
+    const activationToken = user.createActivationToken();
+    await user.save();
+
+    // Gửi email kích hoạt
+    await userService.sendActivationEmail(email, activationToken, req);
+
+    res.render('auth/signup', {
+      message:
+        'Email kích hoạt đã được gửi! Vui lòng đăng nhập email của bạn để kích thoạt tài khoản',
+    });
   } catch (err) {
     console.error(err);
     res.render('auth/signup', { error: 'Có lỗi xảy ra, vui lòng thử lại!' });
+  }
+};
+
+exports.activateAccount = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    // Hash lại token từ URL để so khớp với cơ sở dữ liệu
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await userService.findUserByActivationToken(hashedToken);
+
+    if (!user || user.activationTokenExpires < Date.now()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Liên kết kích hoạt không hợp lệ hoặc đã hết hạn!',
+      });
+    }
+
+    // Kích hoạt tài khoản
+    user.isActive = true;
+    user.activationToken = undefined; // Xóa token sau khi kích hoạt
+    user.activationTokenExpires = undefined;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Tài khoản của bạn đã được kích hoạt thành công!',
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      error: 'Có lỗi xảy ra, vui lòng thử lại!',
+    });
   }
 };
 
@@ -53,14 +90,15 @@ exports.login = (req, res, next) => {
     }
     if (!user) {
       console.error('Authentication failed:', info.message);
-      return res.render('auth/login', { error: 'Invalid email or password' }); // Truyền lỗi vào view
+      return res.render('auth/login', { error: info.message }); // Truyền lỗi vào view
     }
+
     req.logIn(user, (err) => {
       if (err) {
         console.error('Error logging in:', err);
         return res.redirect('/login');
       }
-      res.redirect('/shop'); // Redirect on success
+      res.redirect('/'); // Redirect on success
     });
   })(req, res, next);
 };
