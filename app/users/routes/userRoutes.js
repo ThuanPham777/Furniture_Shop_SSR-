@@ -4,11 +4,22 @@ const userController = require('../controllers/userController');
 const userService = require('../services/userService');
 const crypto = require('crypto');
 const passport = require('passport');
+
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage }).single('avatar');
+
+const {
+  ensureAuthenticated,
+} = require('../../../middleware/auth/ensureAuthenticated');
 // Trang đăng ký
 router.get('/signup', (req, res) => res.render('auth/signup'));
 
 // Trang đăng nhập
 router.get('/login', (req, res) => res.render('auth/login'));
+
+//  Trang profile
+router.get('/profile', (req, res) => res.render('auth/profile'));
 
 // Xử lý đăng ký
 router.post('/signup', userController.signup);
@@ -60,6 +71,18 @@ router.get(
     // Successful login, redirect to home
     res.redirect('/');
   }
+);
+
+router.post(
+  '/profile/edit',
+  ensureAuthenticated,
+  upload,
+  userController.editProfile
+);
+router.post(
+  '/profile/change-password',
+  ensureAuthenticated,
+  userController.changePassword
 );
 
 module.exports = router;

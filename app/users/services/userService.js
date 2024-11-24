@@ -1,13 +1,54 @@
 const User = require('../models/userModel');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
 exports.findUserByEmail = async (email) => {
   return await User.findOne({ email });
+};
+
+// Tìm người dùng theo ID
+exports.findUserById = async (userId) => {
+  return User.findById(userId);
+};
+
+// Cập nhật thông tin người dùng
+exports.updateUser = async (userId, updateData) => {
+  return User.findByIdAndUpdate(userId, updateData, {
+    new: true,
+    runValidators: true,
+  });
 };
 
 exports.createUser = async (userData) => {
   const user = new User(userData);
   return await user.save();
+};
+
+// Xử lý upload avatar
+exports.uploadAvatar = async (file) => {
+  // Hạn chế các loại file hợp lệ
+  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+  if (!allowedMimeTypes.includes(file.mimetype)) {
+    throw new Error('Invalid file type. Only JPG, PNG, and GIF are allowed.');
+  }
+
+  // Đường dẫn đến thư mục đã có sẵn
+  const uploadDir = path.join(__dirname, '../../../public/img/Users');
+
+  // Kiểm tra xem thư mục đã tồn tại hay chưa (trong trường hợp bạn muốn tự động tạo thư mục nếu chưa tồn tại)
+  if (!fs.existsSync(uploadDir)) {
+    // Nếu thư mục chưa tồn tại, tạo thư mục
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+  // Đặt tên file và đường dẫn lưu file
+  const uploadPath = path.join(uploadDir, file.originalname);
+
+  // Lưu file vào thư mục
+  await fs.promises.writeFile(uploadPath, file.buffer);
+
+  // Trả về URL của hình ảnh để có thể truy cập từ trình duyệt
+  return `/img/Users/${file.originalname}`;
 };
 
 exports.sendActivationEmail = async (email, activationToken, req) => {

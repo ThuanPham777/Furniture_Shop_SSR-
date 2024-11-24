@@ -181,3 +181,118 @@ exports.resetPassword = async (req, res) => {
     });
   }
 };
+
+// Edit profile
+exports.editProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const {
+      username,
+      firstName,
+      lastName,
+      phoneNumber,
+      address,
+      city,
+      province,
+    } = req.body;
+
+    const user = await userService.findUserById(userId);
+    if (!user) {
+      return res.status(404).render('auth/profile', {
+        editProfile_message: 'User not found',
+        success: false,
+        user: req.body,
+      });
+    }
+
+    // Xử lý avatar nếu có file upload
+    let avatarUrl = null;
+    if (req.file) {
+      try {
+        avatarUrl = await userService.uploadAvatar(req.file);
+      } catch (err) {
+        return res.status(400).render('auth/profile', {
+          editProfile_message: err.message,
+          success: false,
+          user: req.body,
+        });
+      }
+    }
+
+    // Cập nhật thông tin người dùng
+    const updatedUser = await userService.updateUser(userId, {
+      username,
+      firstName,
+      lastName,
+      phoneNumber,
+      address,
+      city,
+      province,
+      ...(avatarUrl && { avatarUrl }),
+    });
+
+    res.status(200).render('auth/profile', {
+      editProfile_message: 'Profile updated successfully',
+      success: true,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).render('auth/profile', {
+      editProfile_message: 'Error updating profile',
+      success: false,
+      error: error.message,
+      user: req.body,
+    });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+    // Kiểm tra mật khẩu mới và xác nhận mật khẩu
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).render('auth/profile', {
+        changePassword_message: 'New password and confirmation do not match',
+        success: false,
+      });
+    }
+
+    // Tìm người dùng
+    const user = await userService.findUserById(userId);
+    if (!user) {
+      return res.status(404).render('auth/profile', {
+        changePassword_message: 'User not found',
+        success: false,
+      });
+    }
+
+    // Kiểm tra mật khẩu hiện tại
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).render('auth/profile', {
+        changePassword_message: 'Current password is incorrect',
+        success: false,
+      });
+    }
+
+    // Cập nhật mật khẩu mới (được mã hóa ở userSchema)
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).render('auth/profile', {
+      changePassword_message: 'Password changed successfully',
+      success: true,
+    });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).render('auth/profile', {
+      changePassword_message: 'Error changing password',
+      success: false,
+      error: error.message,
+    });
+  }
+};

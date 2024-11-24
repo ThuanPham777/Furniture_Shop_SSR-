@@ -16,7 +16,7 @@ require('./library/passport-config')(passport); // Import Passport config
 
 const app = express();
 app.use(expressLayouts);
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Set default layout
 app.set('layout', './layouts/main');
