@@ -27,7 +27,7 @@
 
         <!-- View Detail Button -->
         <div class="mt-4">
-            <a href="/shop/<%= product._id %>"
+            <a href="/shop/<%= product._id %>-<%= product.name.replace(/\s+/g, '-').toLowerCase() %>"
                 class="px-6 py-2 bg-lime-500 text-white rounded-md hover:bg-lime-600 text-center inline-block">
                 View Detail
             </a>

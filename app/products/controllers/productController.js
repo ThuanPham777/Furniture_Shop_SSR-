@@ -30,13 +30,27 @@ const getAllProducts = async (req, res, next) => {
 // Lấy thông tin sản phẩm theo ID
 const getProductById = async (req, res) => {
   try {
-    const productId = req.params.id;
-    const { products } = await productService.getProducts(); // Lấy tất cả sản phẩm để hiển thị trên trang chi tiết sản phẩm
-    const product = await productService.getProductById(productId);
+    const idWithName = req.params.idWithName;
+
+    // Tách ID và Name
+    const [id, ...nameParts] = idWithName.split('-');
+    const name = nameParts.join('-'); // Gộp lại phần tên
+
+    // Lấy sản phẩm theo ID
+    const product = await productService.getProductById(id);
 
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
+
+    // So sánh name từ URL với tên sản phẩm thực tế
+    const expectedName = product.name.replace(/\s+/g, '-').toLowerCase();
+    if (name.toLowerCase() !== expectedName) {
+      // Redirect đến URL chuẩn nếu không khớp
+      return res.redirect(`/shop/${id}-${expectedName}`);
+    }
+
+    const { products } = await productService.getProducts();
 
     res.render('shop/shopDetail', {
       product,

@@ -6,6 +6,6 @@ const {
 } = require('../controllers/productController'); // Import controller
 
 router.get('/', getAllProducts);
-router.get('/:id', getProductById);
+router.get('/:idWithName', getProductById);
 
 module.exports = router;
