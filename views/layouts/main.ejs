@@ -56,15 +56,15 @@
                         </span>
                     </div>
 
-                    <% if (locals.user) { %>
+                    <% if (user) { %>
                         <div class="relative">
                             <!-- Avatar and Username with dropdown -->
                             <div class="flex items-center space-x-2 cursor-pointer" onclick="toggleDropdown()">
                                 <!-- Check if avatarUrl exists, otherwise use default image -->
-                                <img src="<%= locals.user && locals.user.avatarUrl ? locals.user.avatarUrl : '/img/Users/default.jpg' %>"
+                                <img src="<%= user && user.avatarUrl ? user.avatarUrl : '/img/Users/default.jpg' %>"
                                     alt="User Avatar" class="w-8 h-8 rounded-full">
                                 <span class="text-gray-800 font-medium hidden md:block">
-                                    Hello, <%= locals.user.username %>
+                                    Hello, <%= user.username %>
                                 </span>
                             </div>
 

@@ -16,7 +16,7 @@ exports.getAllReviewsOfProduct = async (productId, filters, page, limit) => {
 
     // Lấy danh sách đánh giá với phân trang
     const reviews = await Review.find(query)
-      .populate('userId', 'username') // Lấy tên người dùng
+      .populate('userId', 'username avatarUrl')
       .sort({ createdAt: -1 }) // Sắp xếp mới nhất trước
       .skip(skip)
       .limit(limit);

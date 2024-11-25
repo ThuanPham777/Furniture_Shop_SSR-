@@ -82,7 +82,7 @@
                             <div class="flex justify-between items-center mb-2">
                                 <div class="flex items-center">
                                     <!-- Avatar -->
-                                    <img src="<%= review.userId.avatarUrl || '/img/Users/default.jpg' %>"
+                                    <img src="<%= review.userId?.avatarUrl || '/img/Users/default.jpg' %>"
                                         alt="<%= review.userId.username %>'s avatar" class="w-8 h-8 rounded-full mr-2">
                                     <span class="font-semibold">
                                         <%= review.userId.username %>
