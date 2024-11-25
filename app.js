@@ -4,12 +4,14 @@ const fs = require('fs');
 const connectDB = require('./config/db');
 const Product = require('./app/products/models/productModel'); // Import model Product
 const User = require('./app/users/models/userModel');
+const Review = require('./app/reviews/models/reviewModel');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const expressLayouts = require('express-ejs-layouts');
 const homeRoute = require('./app/home/homeRoute');
 const shopRoutes = require('./app/products/routes/productRoutes');
 const userRoutes = require('./app/users/routes/userRoutes');
+
 const session = require('express-session');
 const passport = require('passport');
 require('./library/passport-config')(passport); // Import Passport config
@@ -49,6 +51,19 @@ connectDB()
         const data = JSON.parse(fs.readFileSync('./data/users.json', 'utf-8'));
         await User.insertMany(data);
         console.log('Sample users data inserted');
+      }
+
+      // Kiểm tra xem có dữ liệu review nào chưa
+      const countReview = await Review.countDocuments({});
+      if (countReview === 0) {
+        // Đọc dữ liệu từ file reviews.json
+        const reviewData = JSON.parse(
+          fs.readFileSync('./data/reviews.json', 'utf-8')
+        );
+
+        // Chèn dữ liệu vào cơ sở dữ liệu MongoDB
+        await Review.insertMany(reviewData);
+        console.log('Sample reviews data inserted');
       }
     } catch (err) {
       console.error('Error inserting sample data:', err);

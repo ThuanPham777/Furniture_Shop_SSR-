@@ -71,8 +71,57 @@
                 </div>
             </div>
         </div>
+        <!--Reviews Product -->
+        <div>
+            <div class="reviews-section mt-8">
+                <h2 class="text-xl font-bold mb-4">Customer Reviews</h2>
 
-        <!-- Rekated Products -->
+                <% if (reviews && reviews.length> 0) { %>
+                    <% reviews.forEach((review)=> { %>
+                        <div class="review-item mb-4 p-4 border border-gray-200 rounded">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="flex items-center">
+                                    <!-- Avatar -->
+                                    <img src="<%= review.userId.avatarUrl || '/img/Users/default.jpg' %>"
+                                        alt="<%= review.userId.username %>'s avatar" class="w-8 h-8 rounded-full mr-2">
+                                    <span class="font-semibold">
+                                        <%= review.userId.username %>
+                                    </span>
+                                </div>
+                                <span class="text-gray-500 text-sm">
+                                    <%= new Date(review.createdAt).toLocaleDateString() %>
+                                </span>
+                            </div>
+                            <div class="review-rating text-yellow-500 mb-2">
+                                <% for (let i=1; i <=5; i++) { %>
+                                    <% if (i <=review.rating) { %>
+                                        ★
+                                        <% } else { %>
+                                            ☆
+                                            <% } %>
+                                                <% } %>
+                            </div>
+                            <p class="review-comment text-gray-700">
+                                <%= review.comment %>
+                            </p>
+                        </div>
+                        <% }) %>
+                            <% } else { %>
+                                <p class="text-gray-500">No reviews yet. Be the first to review this product!</p>
+                                <% } %>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination mt-4">
+                <% for (let i=1; i <=totalPages; i++) { %>
+                    <a href="?page=<%= i %>"
+                        class="px-3 py-1 rounded <%= currentPage === i ? 'bg-blue-500 text-white' : 'bg-gray-200' %>">
+                        <%= i %>
+                    </a>
+                    <% } %>
+            </div>
+        </div>
+        <!-- Related Products -->
     <div class="mt-16">
         <h2 class="text-3xl font-bold mb-8">Related Products</h2>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
