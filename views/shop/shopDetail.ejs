@@ -58,12 +58,30 @@
                     </span>
                 </div>
 
+                <!-- quantity -->
+                <div class="flex items-center gap-4 mb-6">
+                    <button id="decreaseQty" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400">
+                        -
+                    </button>
+                    <span id="productQuantity" class="text-2xl font-semibold">1</span>
+                    <button id="increaseQty" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400"
+                    >
+                        +
+                    </button>
+                </div>
                 <!-- Nút hành động -->
                 <div class="flex flex-wrap items-center gap-4">
-                    <button
-                        class="bg-lime-500 text-white px-6 py-2 rounded-lg hover:bg-lime-600 transition duration-300">
+                <% if (user) { %>
+                    <button class="bg-lime-500 text-white px-6 py-2 rounded-lg hover:bg-lime-600 transition duration-300"
+                        onclick="addToCart('<%= product._id %>')">
                         Add to Cart
                     </button>
+                    <% } else { %>
+                        <button class="bg-lime-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition duration-300"
+                            onclick="window.location.href='/login';">
+                            Add to Cart
+                        </button>
+                        <% } %>
                     <button
                         class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition duration-300">
                         Wishlist
@@ -170,6 +188,7 @@
 </div>
 
 <script>
+
     function changeMainImage(selectedThumbnail) {
         const mainImage = document.getElementById('mainImage');
         const images = JSON.parse(mainImage.getAttribute('data-images'));
@@ -183,4 +202,56 @@
         // Thêm lớp 'selected-thumbnail' vào ảnh được chọn
         selectedThumbnail.classList.add('selected-thumbnail');
     }
+
+     // Lấy giá trị totalStock từ server
+    const totalStock = '<%= product.totalStock %>';
+    let quantity = 1;
+
+        // Cập nhật số lượng sản phẩm
+        document.getElementById('increaseQty').addEventListener('click', () => {
+            if (quantity < totalStock) {
+                quantity++;
+                updateQuantityDisplay();
+            } else {
+                //alert(`You can only purchase up to ${totalStock} items.`);
+                document.getElementById('increaseQty').disabled = true;
+            }
+        });
+
+        document.getElementById('decreaseQty').addEventListener('click', () => {
+            if (quantity > 1) {
+                quantity--;
+                updateQuantityDisplay();
+            }
+        });
+
+        function updateQuantityDisplay() {
+            document.getElementById('productQuantity').innerText = quantity;
+        }
+
+
+        async function addToCart(productId) {
+            try {
+                const response = await fetch('/api/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        productId: productId,
+                        quantity: quantity,
+                    }),
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Product added to cart successfully!');
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                alert('Something went wrong. Please try again later.');
+            }
+        }
 </script>
