@@ -72,9 +72,7 @@ async function updateCartItemQuantity(userId, productId, quantity) {
  */
 async function deleteCartItem(userId, productId) {
   const result = await Cart.findOneAndDelete({ userId, productId });
-  if (!result) {
-    throw new Error('Cart item not found');
-  }
+  return result;
 }
 
 /**
@@ -89,6 +87,17 @@ async function getCartByUserId(userId) {
     .populate('productId') // Populate product details
     .lean();
 }
+async function calculateCartTotals(userId) {
+  const cartItems = await Cart.find({ userId }).populate('productId');
+
+  const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalAmount = cartItems.reduce((sum, item) => {
+    const price = item.productId.salePrice || item.productId.price;
+    return sum + price * item.quantity;
+  }, 0);
+
+  return { totalQuantity, totalAmount };
+}
 
 module.exports = {
   addCartItem,
@@ -96,4 +105,5 @@ module.exports = {
   deleteCartItem,
   deleteAllCartItems,
   getCartByUserId,
+  calculateCartTotals,
 };

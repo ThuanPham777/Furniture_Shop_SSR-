@@ -1,12 +1,7 @@
 <div class="my-6">
-    <div>
-        <h1 class="text-xl font-bold text-center mb-6">My Cart</h1>
-    </div>
     <div class="cart-page-container my-6 px-4 flex flex-col lg:flex-row justify-center items-center">
         <!-- Cart Section -->
         <div class="cart-container lg:w-2/3 px-4">
-
-
             <table class="w-full border-collapse">
                 <thead class="bg-gray-100">
                     <tr>
@@ -20,7 +15,7 @@
                 <tbody>
                     <% if (cartItems.length> 0) { %>
                         <% cartItems.forEach(item=> { %>
-                            <tr>
+                            <tr id="row-<%= item.productId._id %>">
                                 <td class="p-2 border text-center">
                                     <img src="<%= item.productId.images[0] %>" alt="<%= item.productId.name %>"
                                         class="w-16 h-16 object-cover rounded">
@@ -35,8 +30,9 @@
                                         onChange="updateQuantity('<%= item.productId._id %>', this.value)"
                                         onblur="validateQuantity(this, '<%= item.productId._id %>')">
                                 </td>
-                                <td class="p-2 border text-center">$<%= ((item.productId.salePrice || item.productId.price)
-                                        * item.quantity).toFixed(2) %>
+                                <td class="p-2 border text-center" id="price-<%= item.productId._id %>">
+                                    $<%= ((item.productId.salePrice || item.productId.price) * item.quantity).toFixed(2)
+                                        %>
                                 </td>
                                 <td class="p-2 border text-center">
                                     <button onclick="removeFromCart('<%= item.productId._id %>')"
@@ -54,8 +50,9 @@
 
             <% if (cartItems.length> 0) { %>
                 <div class="flex justify-center mt-4">
-                    <button onclick="deleteAllItems()" class="bg-red-600 text-white px-6 py-2 rounded text-sm">Delete
-                        All</button>
+                    <button onclick="deleteAllItems()" class="bg-red-600 text-white px-6 py-2 rounded text-sm">
+                        Delete All
+                    </button>
                 </div>
                 <% } %>
         </div>
@@ -66,15 +63,14 @@
                 <h2 class="text-lg font-bold mb-4">Order Summary</h2>
                 <p class="text-sm mb-2">
                     <span class="font-semibold">Total Quantity:</span>
-                    <span class="text-green-500">
+                    <span class="text-green-500" id="total-quantity">
                         <%= totalQuantity %>
                     </span>
                 </p>
                 <p class="text-sm mb-4">
                     <span class="font-semibold">Total Amount:</span>
-                    <span class="text-green-500">$<%= totalAmount.toFixed(2) %></span>
+                    <span class="text-green-500" id="total-amount">$<%= totalAmount.toFixed(2) %></span>
                 </p>
-                <!-- Nút chuyển đến trang Checkout -->
                 <button class="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700"
                     onclick="window.location.href = '/checkout'">
                     Proceed to Checkout
@@ -82,64 +78,85 @@
             </div>
         </div>
     </div>
-
 </div>
+
 
 
 <script>
     // Function to update the quantity in the cart
-    async function updateQuantity(productId, quantity) {
+        async function updateQuantity(productId, quantity) {
+            const inputElement = document.querySelector(`#quantity-${productId}`);
+            const maxQuantity = parseInt(inputElement.max, 10);
+            quantity = parseInt(quantity, 10);
 
-        const maxQuantity = document.querySelector(`#quantity-${productId}`).max;
-        if (quantity > maxQuantity) {
-            alert(`You can only purchase up to ${maxQuantity} items.`);
-            quantity = maxQuantity; // Reset to max quantity
-        }
-
-        try {
-            const response = await fetch(`/api/cart/update`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    productId,
-                    quantity: parseInt(quantity), // Ensure quantity is an integer
-                }),
-            });
-
-            const result = await response.json();
-            if (response.ok) {
-                location.reload(); // Reload the page to reflect the updated cart
-            } else {
-                  alert(result.message || 'Failed to update item quantity');
+            if (quantity > maxQuantity) {
+                alert(`You can only purchase up to ${maxQuantity} items.`);
+                inputElement.value = maxQuantity; // Đặt lại giá trị
+                quantity = maxQuantity;
             }
-        } catch (error) {
-            alert('Something went wrong while updating the quantity');
-        }
-    }
 
-    // Function to remove an item from the cart
-    async function removeFromCart(productId) {
-        try {
-            const response = await fetch(`/api/cart/delete/${productId}`, { method: 'DELETE' });
-            if (response.ok) {
-                location.reload(); // Reload the page to reflect the updated cart
-            } else {
-                alert('Failed to remove item from cart');
+            try {
+                const response = await fetch(`/api/cart/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ productId, quantity: parseInt(quantity) }),
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                     const priceElement = document.querySelector(`#price-${productId}`);
+                    const totalQuantityElement = document.querySelector(`#total-quantity`);
+                    const totalAmountElement = document.querySelector(`#total-amount`);
+
+                    console.log(priceElement, totalQuantityElement, totalAmountElement); // Log các phần tử DOM
+
+                    priceElement.innerText = `$${result.updatedCartItem.price.toFixed(2)}`;
+                    totalQuantityElement.innerText = result.totalQuantity;
+                    totalAmountElement.innerText = `$${result.totalAmount.toFixed(2)}`;
+                } else {
+                    alert(result.message || 'Failed to update item quantity');
+                }
+            } catch (error) {
+                alert('Something went wrong while updating the quantity');
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Something went wrong!');
         }
-    }
 
-    async function deleteAllItems() {
+        // Function to remove an item from the cart
+        async function removeFromCart(productId) {
+                try {
+                    const response = await fetch(`/api/cart/delete/${productId}`, { method: 'DELETE' });
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        const rowElement = document.querySelector(`#row-${productId}`);
+                        if (rowElement) rowElement.remove();
+
+                        document.querySelector(`#total-quantity`).innerText = result.totalQuantity;
+                        document.querySelector(`#total-amount`).innerText = `$${result.totalAmount.toFixed(2)}`;
+                    } else {
+                        alert(result.message || 'Failed to remove item from cart');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Something went wrong!');
+                }
+            }
+
+
+        // Function to delete all items from the cart
+        async function deleteAllItems() {
             try {
                 const response = await fetch('/api/cart/delete-all', { method: 'DELETE' });
+                const result = await response.json();
 
                 if (response.ok) {
-                    location.reload(); // Reload the page to reflect the updated cart
+                    document.querySelector('tbody').innerHTML = `<tr>
+                <td colspan="5" class="p-2 text-center text-gray-500">The Cart is Empty</td>
+            </tr>`;
+                    document.querySelector(`#total-quantity`).innerText = 0;
+                    document.querySelector(`#total-amount`).innerText = '$0.00';
                 } else {
                     alert('Failed to clear the cart');
                 }
@@ -149,18 +166,18 @@
             }
         }
 
-        // Function to validate input value when the user leaves the input field
-            function validateQuantity(inputElement, productId) {
-                let quantity = parseInt(inputElement.value);
-                const maxQuantity = inputElement.max;
+        // Function to validate quantity input
+        function validateQuantity(inputElement, productId) {
+            let quantity = parseInt(inputElement.value);
+            const maxQuantity = inputElement.max;
 
-                // If the input is invalid (non-numeric or out of range), reset it to valid value
-                if (isNaN(quantity) || quantity < 1) {
-                    alert('Please enter a valid quantity');
-                    inputElement.value = 1; // Reset to minimum
-                } else if (quantity > maxQuantity) {
-                    alert(`You can only purchase up to ${maxQuantity} items.`);
-                    inputElement.value = maxQuantity; // Reset to max quantity
-                }
+            if (isNaN(quantity) || quantity < 1) {
+                alert('Please enter a valid quantity');
+                inputElement.value = 1;
+            } else if (quantity > maxQuantity) {
+                alert(`You can only purchase up to ${maxQuantity} items.`);
+                inputElement.value = maxQuantity;
             }
+        }
+
 </script>

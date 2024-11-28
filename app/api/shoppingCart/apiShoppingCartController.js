@@ -1,5 +1,5 @@
 const cartService = require('../../cart/services/cartService');
-
+const productService = require('../../products/services/productService');
 //Add a new item to the cart
 async function addCartItem(req, res) {
   const userId = req.user._id;
@@ -49,9 +49,19 @@ async function updateCartItem(req, res) {
       return res.status(404).json({ message: 'Cart item not found' });
     }
 
+    const product = await productService.getProductById(productId);
+
+    const { totalQuantity, totalAmount } =
+      await cartService.calculateCartTotals(userId);
+
     res.status(200).json({
       message: 'Cart item quantity updated successfully',
-      updatedCartItem,
+      updatedCartItem: {
+        price: (product.salePrice || product.price) * quantity,
+        quantity,
+      },
+      totalQuantity,
+      totalAmount,
     });
   } catch (error) {
     console.error('Error updating cart item:', error);
@@ -65,10 +75,24 @@ async function deleteCartItem(req, res) {
   const { productId } = req.params;
 
   try {
-    await cartService.deleteCartItem(userId, productId);
-    res.status(200).json({ message: 'Cart item deleted successfully' });
+    const deletedItem = await cartService.deleteCartItem(userId, productId);
+
+    if (!deletedItem) {
+      return res.status(404).json({ message: 'Cart item not found' });
+    }
+
+    // Tính toán lại tổng số lượng và tổng số tiền
+    const { totalQuantity, totalAmount } =
+      await cartService.calculateCartTotals(userId);
+
+    res.status(200).json({
+      message: 'Cart item deleted successfully',
+      totalQuantity,
+      totalAmount,
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error deleting cart item:', error);
+    res.status(500).json({ message: 'Failed to delete cart item' });
   }
 }
 
