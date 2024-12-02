@@ -13,6 +13,7 @@ const shopRoutes = require('./app/products/routes/productRoutes');
 const userRoutes = require('./app/users/routes/userRoutes');
 const apiShoppingCartRoute = require('./app/api/shoppingCart/apiShoppingCartRoute');
 const cartRoute = require('./app/cart/routes/cartRoute');
+const orderRoutes = require('./app/order/routes/orderRoutes');
 
 const session = require('express-session');
 const passport = require('passport');
@@ -102,6 +103,7 @@ app.use('/cart', cartRoute);
 app.use('/', homeRoute);
 app.use('/shop', shopRoutes);
 app.use('/', userRoutes);
+app.use('/', orderRoutes);
 
 app.get('/about', (req, res) => {
   res.render('about/about', {

@@ -1,4 +1,4 @@
-<div class="my-6">
+<div class="my-20">
     <div class="cart-page-container my-6 px-4 flex flex-col lg:flex-row justify-center items-center">
         <!-- Cart Section -->
         <div class="cart-container lg:w-2/3 px-4">
@@ -16,7 +16,7 @@
                     <tbody>
                         <% cartItems.forEach(item=> { %>
                             <tr id="row-<%= item.productId._id %>">
-                                <td class="p-2 border text-center">
+                                <td class="p-2 border flex justify-center">
                                     <img src="<%= item.productId.images[0] %>" alt="<%= item.productId.name %>"
                                         class="w-16 h-16 object-cover rounded">
                                 </td>
