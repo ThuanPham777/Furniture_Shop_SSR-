@@ -62,3 +62,17 @@ exports.getOrderById = async (orderId) => {
     throw error; // Ném lỗi ra ngoài để controller hoặc handler xử lý
   }
 };
+
+exports.getAllOrdersByUserID = async (userId) => {
+  try {
+    const orders = await Order.find({ userId })
+      .populate('userId')
+      .populate('items.productId');
+    return orders;
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    return res
+      .status(500)
+      .json({ success: false, error: 'Có lỗi xảy ra, vui lòng thử lại!' });
+  }
+};

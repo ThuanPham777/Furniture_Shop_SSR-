@@ -17,4 +17,11 @@ router.get(
   orderController.orderSuccess
 );
 
+router.get('/order-list', ensureAuthenticated, orderController.getAllOrders);
+
+router.get(
+  '/order-details/:orderId',
+  ensureAuthenticated,
+  orderController.getOrderDetails
+);
 module.exports = router;
