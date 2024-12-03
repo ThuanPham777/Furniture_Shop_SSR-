@@ -28,13 +28,18 @@ exports.getAllReviewsOfProduct = async (productId, filters, page, limit) => {
 };
 
 exports.createReview = async (userId, productId, rating, comment, images) => {
-  const review = new Review({
-    userId,
-    productId,
-    rating,
-    comment,
-    images,
-  });
-  await review.save();
-  return review;
+  try {
+    const review = new Review({
+      userId,
+      productId,
+      rating,
+      comment,
+      images,
+    });
+
+    await review.save();
+    return review;
+  } catch (error) {
+    throw new Error('Error creating review: ' + error.message);
+  }
 };
