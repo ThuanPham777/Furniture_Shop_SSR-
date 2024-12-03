@@ -50,13 +50,15 @@ exports.createOrder = async (userId, paymentMethod, address, transactionId) => {
 
 exports.getOrderById = async (orderId) => {
   try {
-    const order = await Order.findById(orderId).populate('userId');
+    const order = await Order.findById(orderId)
+      .populate('userId')
+      .populate('items.productId');
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      throw new Error('Order not found'); // Ném lỗi nếu không tìm thấy
     }
-    return order;
+    return order; // Trả về đơn hàng nếu tìm thấy
   } catch (error) {
     console.error('Error fetching order:', error);
-    res.status(500).json({ message: 'Error fetching order' });
+    throw error; // Ném lỗi ra ngoài để controller hoặc handler xử lý
   }
 };
