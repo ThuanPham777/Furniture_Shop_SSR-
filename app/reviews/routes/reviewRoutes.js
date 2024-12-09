@@ -6,6 +6,6 @@ const {
   ensureAuthenticated,
 } = require('../../../middleware/auth/ensureAuthenticated');
 
-router.post('/reviews/create', ensureAuthenticated, createReview);
+router.post('/create/:productId', ensureAuthenticated, createReview);
 
 module.exports = router;
