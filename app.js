@@ -12,6 +12,7 @@ const homeRoute = require('./app/home/homeRoute');
 const shopRoutes = require('./app/products/routes/productRoutes');
 const userRoutes = require('./app/users/routes/userRoutes');
 const apiShoppingCartRoute = require('./app/api/shoppingCart/apiShoppingCartRoute');
+const apiProductRoutes = require('./app/api/products/apiProductRoutes');
 const cartRoute = require('./app/cart/routes/cartRoute');
 const orderRoutes = require('./app/order/routes/orderRoutes');
 
@@ -96,6 +97,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use('/api/cart', apiShoppingCartRoute);
+app.use('/api/products', apiProductRoutes);
 app.use('/cart', cartRoute);
 app.use('/', homeRoute);
 app.use('/shop', shopRoutes);
