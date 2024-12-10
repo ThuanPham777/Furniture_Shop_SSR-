@@ -81,12 +81,13 @@ async function deleteCartItem(req, res) {
       return res.status(404).json({ message: 'Cart item not found' });
     }
 
-    // Tính toán lại tổng số lượng và tổng số tiền
-    const { totalQuantity, totalAmount } =
+    // Recalculate totals after item deletion
+    const { cartItems, totalQuantity, totalAmount } =
       await cartService.calculateCartTotals(userId);
 
     res.status(200).json({
       message: 'Cart item deleted successfully',
+      cartItems,
       totalQuantity,
       totalAmount,
     });
@@ -102,7 +103,15 @@ async function deleteAllCartItems(req, res) {
 
   try {
     await cartService.deleteAllCartItems(userId);
-    res.status(200).json({ message: 'All cart items deleted successfully' });
+    const { cartItems, totalQuantity, totalAmount } =
+      await cartService.calculateCartTotals(userId);
+
+    res.status(200).json({
+      message: 'All cart items deleted successfully',
+      cartItems,
+      totalQuantity,
+      totalAmount,
+    });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

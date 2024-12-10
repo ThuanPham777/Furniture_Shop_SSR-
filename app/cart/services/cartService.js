@@ -96,7 +96,7 @@ async function calculateCartTotals(userId) {
     return sum + price * item.quantity;
   }, 0);
 
-  return { totalQuantity, totalAmount };
+  return { cartItems, totalQuantity, totalAmount };
 }
 
 module.exports = {
