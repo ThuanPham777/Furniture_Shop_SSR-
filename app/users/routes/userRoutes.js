@@ -4,10 +4,7 @@ const userController = require('../controllers/userController');
 const userService = require('../services/userService');
 const crypto = require('crypto');
 const passport = require('passport');
-
-const multer = require('multer');
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage }).single('avatar');
+const upload = require('../../../config/upload');
 
 const {
   ensureAuthenticated,
@@ -76,7 +73,7 @@ router.get(
 router.post(
   '/profile/edit',
   ensureAuthenticated,
-  upload,
+  upload.single('avatar'),
   userController.editProfile
 );
 router.post(

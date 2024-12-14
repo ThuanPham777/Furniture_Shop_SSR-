@@ -1,8 +1,7 @@
 const User = require('../models/userModel');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
-const path = require('path');
-const fs = require('fs');
+const cloudinary = require('../../../config/cloudinary');
 exports.findUserByEmail = async (email) => {
   return await User.findOne({ email });
 };
@@ -25,30 +24,51 @@ exports.createUser = async (userData) => {
   return await user.save();
 };
 
-// Xử lý upload avatar
-exports.uploadAvatar = async (file) => {
-  // Hạn chế các loại file hợp lệ
-  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-  if (!allowedMimeTypes.includes(file.mimetype)) {
-    throw new Error('Invalid file type. Only JPG, PNG, and GIF are allowed.');
+exports.uploadAvatar = async (userId, file) => {
+  const folderName = 'users'; // Upload to a specific folder in Cloudinary
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // If the user has an existing avatar, delete it from Cloudinary
+    if (user.avatarUrl) {
+      // Extract public ID from the avatar URL using regex
+      const publicIdMatch = user.avatarUrl.match(/\/([^/]+)\.[a-z]{3,4}$/);
+      if (publicIdMatch && publicIdMatch[1]) {
+        const publicId = publicIdMatch[1]; // The public ID is before the file extension
+
+        console.log('publicId', publicId);
+
+        // Delete the old avatar from Cloudinary
+        await cloudinary.uploader.destroy(`users/${publicId}`);
+      }
+    }
+
+    // Upload the new avatar to Cloudinary
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'auto',
+          folder: folderName,
+        },
+        (error, result) => {
+          if (error) {
+            console.error('Cloudinary upload error:', error);
+            return reject(error);
+          }
+          console.log('result', result);
+          resolve(result.secure_url); // Return the URL of the uploaded image
+        }
+      );
+      stream.end(file.buffer); // Pass the file buffer for upload
+    });
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
+    throw error;
   }
-
-  // Đường dẫn đến thư mục đã có sẵn
-  const uploadDir = path.join(__dirname, '../../../public/img/Users');
-
-  // Kiểm tra xem thư mục đã tồn tại hay chưa (trong trường hợp bạn muốn tự động tạo thư mục nếu chưa tồn tại)
-  if (!fs.existsSync(uploadDir)) {
-    // Nếu thư mục chưa tồn tại, tạo thư mục
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-  // Đặt tên file và đường dẫn lưu file
-  const uploadPath = path.join(uploadDir, file.originalname);
-
-  // Lưu file vào thư mục
-  await fs.promises.writeFile(uploadPath, file.buffer);
-
-  // Trả về URL của hình ảnh để có thể truy cập từ trình duyệt
-  return `/img/Users/${file.originalname}`;
 };
 
 exports.sendActivationEmail = async (email, activationToken, req) => {

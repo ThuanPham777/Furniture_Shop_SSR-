@@ -186,7 +186,6 @@ exports.resetPassword = async (req, res) => {
 exports.editProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-
     const {
       username,
       firstName,
@@ -206,11 +205,10 @@ exports.editProfile = async (req, res) => {
       });
     }
 
-    // Xử lý avatar nếu có file upload
     let avatarUrl = null;
     if (req.file) {
       try {
-        avatarUrl = await userService.uploadAvatar(req.file);
+        avatarUrl = await userService.uploadAvatar(userId, req.file); // Wait for avatar upload
       } catch (err) {
         return res.status(400).render('auth/profile', {
           editProfile_message: err.message,
@@ -220,7 +218,6 @@ exports.editProfile = async (req, res) => {
       }
     }
 
-    // Cập nhật thông tin người dùng
     const updatedUser = await userService.updateUser(userId, {
       username,
       firstName,
@@ -229,7 +226,7 @@ exports.editProfile = async (req, res) => {
       address,
       city,
       province,
-      ...(avatarUrl && { avatarUrl }),
+      ...(avatarUrl && { avatarUrl }), // Add avatar URL if it's set
     });
 
     res.status(200).render('auth/profile', {
