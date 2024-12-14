@@ -24,4 +24,10 @@ router.get(
   ensureAuthenticated,
   orderController.getOrderDetails
 );
+
+router.get(
+  '/payment-success',
+  ensureAuthenticated,
+  orderController.handleStripeSuccess
+);
 module.exports = router;

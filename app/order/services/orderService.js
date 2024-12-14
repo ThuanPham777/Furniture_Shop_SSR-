@@ -1,6 +1,8 @@
 // services/orderService.js
 const Cart = require('../../cart/models/cartModel');
 const Order = require('../models/orderModel');
+const cartService = require('../../cart/services/cartService');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 exports.createOrder = async (userId, paymentMethod, address, transactionId) => {
   try {
@@ -74,5 +76,71 @@ exports.getAllOrdersByUserID = async (userId) => {
     return res
       .status(500)
       .json({ success: false, error: 'Có lỗi xảy ra, vui lòng thử lại!' });
+  }
+};
+
+exports.processPayment = async ({ userId, address, paymentMethod }) => {
+  try {
+    // Fetch items from the user's cart
+    const items = await cartService.getCartByUserId(userId);
+
+    // Check if the cart is empty
+    if (!items || items.length === 0) {
+      throw new Error('Cart is empty. Cannot place order.');
+    }
+
+    // Handle payment via Stripe
+    if (paymentMethod === 'Stripe') {
+      const lineItems = items.map((item) => {
+        const product = item.productId; // Access the populated product
+
+        // Validate product data
+        if (!product || !product.name || !product.price) {
+          throw new Error(`Invalid product data for: ${item.productId}`);
+        }
+
+        const price = parseFloat(product.salePrice || product.price); // Convert to number
+        if (isNaN(price)) {
+          throw new Error(`Invalid price for product ${product.name}`);
+        }
+
+        return {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              images: [product.images[0]], // Use the first image of the product
+              name: product.name,
+              description: `Quantity: ${item.quantity}`,
+            },
+            unit_amount: Math.round(price * 100), // Convert to cents
+          },
+          quantity: item.quantity,
+        };
+      });
+      // Create a Stripe session
+      const domain =
+        process.env.NODE_ENV === 'production'
+          ? process.env.DOMAIN_HOST
+          : process.env.DOMAIN;
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        line_items: lineItems,
+        success_url: `${domain}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${domain}/checkout`,
+        metadata: {
+          address: JSON.stringify(address), // Serialize address to a string
+        },
+      });
+
+      // Return the session URL for redirecting to Stripe
+      return session.url;
+    } else {
+      throw new Error('Unsupported payment method.');
+    }
+  } catch (error) {
+    console.error('Error in createOrderAndProcessPayment:', error);
+    throw error; // Let the controller handle the error
   }
 };

@@ -2,6 +2,7 @@
 const orderService = require('../services/orderService');
 const Cart = require('../../cart/models/cartModel');
 const User = require('../../users/models/userModel');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 exports.checkout = async (req, res) => {
   try {
@@ -27,6 +28,7 @@ exports.checkout = async (req, res) => {
       totalQuantity += quantity; // Cộng dồn số lượng
 
       return {
+        name: product.name,
         productId: product._id,
         quantity,
         price,
@@ -48,22 +50,48 @@ exports.checkout = async (req, res) => {
 
 exports.placeOrder = async (req, res) => {
   try {
-    const { paymentMethod, address, transactionId } = req.body;
-    const userId = req.user._id; // Giả sử bạn đã có thông tin người dùng
+    const { address, paymentMethod } = req.body;
+    const userId = req.user._id;
 
-    // Gọi service để tạo đơn hàng
-    const newOrder = await orderService.createOrder(
+    // Delegate order placement logic to the service
+    const sessionUrl = await orderService.processPayment({
       userId,
-      paymentMethod,
       address,
-      transactionId
+      paymentMethod,
+    });
+
+    // Respond with the Stripe session URL
+    res.json({ url: sessionUrl });
+  } catch (error) {
+    console.error('Error placing order:', error);
+    res.status(500).json({ message: 'Failed to place order.' });
+  }
+};
+
+exports.handleStripeSuccess = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    // Lấy session_id từ query
+    const session = await stripe.checkout.sessions.retrieve(
+      req.query.session_id
     );
 
-    // Redirect đến trang thành công
-    res.redirect(`order-success/${newOrder._id}`);
+    // Lấy metadata từ phiên Stripe
+    const address = JSON.parse(session.metadata.address);
+
+    // Lưu order vào cơ sở dữ liệu
+    const newOrder = await orderService.createOrder(
+      userId,
+      'Stripe',
+      address,
+      session.id // Stripe session ID
+    );
+
+    // Chuyển hướng người dùng đến trang thành công
+    res.redirect(`/order-success/${newOrder._id}`);
   } catch (error) {
-    console.error(error);
-    res.status(500).send('Something went wrong!');
+    console.error('Error handling payment success:', error);
+    res.status(500).send('An error occurred while processing the payment.');
   }
 };
 
