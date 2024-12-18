@@ -1,6 +1,8 @@
 exports.ensureAuthenticated = (req, res, next) => {
-  if (req.isAuthenticated()) {
+  if (req.isAuthenticated() || req.url === "/add") {
     return next();
   }
-  return next();
+  console.log("aaaaaaaaaa");
+  console.log(req);
+  return res.redirect("/login");
 };

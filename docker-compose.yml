@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  furnitureapp:
+    container_name: furnitureapp
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - "5000:5000"
+    restart: always
+    networks:
+      - my_network
+    depends_on:
+      - redisdb
+  redisdb:
+    container_name: redisdb
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - my_network
+networks:
+  my_network:
+    driver: bridge
