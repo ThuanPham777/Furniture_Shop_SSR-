@@ -1,7 +1,8 @@
 const cartService = require("../../cart/services/cartService");
 const productService = require("../../products/services/productService");
 const Redis = require("ioredis");
-const redis = new Redis();
+// const redis = new Redis(); //localenv
+const redis = new Redis({ host: "redisdb" }); //docker-env
 var sessionId = " ";
 //Add a new item to the cart
 async function addCartItem(req, res) {
@@ -37,14 +38,11 @@ async function addCartItem(req, res) {
       );
 
       if (productIndex > -1) {
-        // Cập nhật số lượng nếu sản phẩm đã tồn tại trong giỏ hàng
         cart[productIndex].quantity += quantity;
       } else {
-        // Thêm sản phẩm mới
         cart.push({ productId, quantity });
       }
 
-      // Lưu lại vào Redis
       await redis.set(cartKey, JSON.stringify(cart), "EX", 3600); // TTL 1 giờ
       return res
         .status(200)
