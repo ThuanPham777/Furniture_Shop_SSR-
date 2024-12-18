@@ -1,30 +1,31 @@
 // controllers/userController.js
-const passport = require('passport');
-const userService = require('../services/userService'); // Import user service
-const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
+const passport = require("passport");
+const userService = require("../services/userService"); // Import user service
+const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
+const apiShoppingCartController = require("../../api/shoppingCart/apiShoppingCartController");
 
 exports.signup = async (req, res) => {
   const { username, email, password, passwordConfirm } = req.body;
 
   try {
     if (password !== passwordConfirm) {
-      return res.render('auth/signup', {
-        error: 'Mật khẩu xác nhận không trùng khớp',
+      return res.render("auth/signup", {
+        error: "Mật khẩu xác nhận không trùng khớp",
       });
     }
 
     const userExists = await userService.findUserByEmail(email);
     if (userExists) {
-      return res.render('auth/signup', { error: 'Email đã được sử dụng' });
+      return res.render("auth/signup", { error: "Email đã được sử dụng" });
     }
 
     const passwordRegex =
       /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     if (!passwordRegex.test(password)) {
-      return res.render('auth/signup', {
+      return res.render("auth/signup", {
         error:
-          'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
+          "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
       });
     }
 
@@ -37,34 +38,36 @@ exports.signup = async (req, res) => {
     // Gửi email kích hoạt
     await userService.sendActivationEmail(email, activationToken, req);
 
-    res.render('auth/signup', {
+    res.render("auth/signup", {
       message:
-        'Email kích hoạt đã được gửi! Vui lòng đăng nhập email của bạn để kích thoạt tài khoản',
+        "Email kích hoạt đã được gửi! Vui lòng đăng nhập email của bạn để kích thoạt tài khoản",
     });
   } catch (err) {
     console.error(err);
-    res.render('auth/signup', { error: 'Có lỗi xảy ra, vui lòng thử lại!' });
+    res.render("auth/signup", { error: "Có lỗi xảy ra, vui lòng thử lại!" });
   }
 };
 
 // Xử lý đăng nhập
 exports.login = (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => {
+  passport.authenticate("local", (err, user, info) => {
     if (err) {
-      console.error('Error during authentication:', err);
-      return res.redirect('/login');
+      console.error("Error during authentication:", err);
+      return res.redirect("/login");
     }
     if (!user) {
-      console.error('Authentication failed:', info.message);
-      return res.render('auth/login', { error: info.message }); // Truyền lỗi vào view
+      console.error("Authentication failed:", info.message);
+      return res.render("auth/login", { error: info.message }); // Truyền lỗi vào view
     }
 
-    req.logIn(user, (err) => {
+    req.logIn(user, async (err) => {
       if (err) {
-        console.error('Error logging in:', err);
-        return res.redirect('/login');
+        console.error("Error logging in:", err);
+        return res.redirect("/login");
       }
-      res.redirect('/'); // Redirect on success
+      res.redirect("/");
+      console.log("hiiii");
+      await apiShoppingCartController.syncCartAfterLogin(req, res);
     });
   })(req, res, next);
 };
@@ -74,9 +77,9 @@ exports.logout = (req, res) => {
   req.logout((err) => {
     if (err) {
       console.error(err);
-      return res.redirect('/');
+      return res.redirect("/");
     }
-    res.redirect('/login');
+    res.redirect("/login");
   });
 };
 
@@ -85,14 +88,14 @@ exports.activateAccount = async (req, res) => {
 
   try {
     // Hash lại token từ URL để so khớp với cơ sở dữ liệu
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const user = await userService.findUserByActivationToken(hashedToken);
 
     if (!user || user.activationTokenExpires < Date.now()) {
       return res.status(400).json({
         success: false,
-        error: 'Liên kết kích hoạt không hợp lệ hoặc đã hết hạn!',
+        error: "Liên kết kích hoạt không hợp lệ hoặc đã hết hạn!",
       });
     }
 
@@ -104,13 +107,13 @@ exports.activateAccount = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Tài khoản của bạn đã được kích hoạt thành công!',
+      message: "Tài khoản của bạn đã được kích hoạt thành công!",
     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({
       success: false,
-      error: 'Có lỗi xảy ra, vui lòng thử lại!',
+      error: "Có lỗi xảy ra, vui lòng thử lại!",
     });
   }
 };
@@ -121,8 +124,8 @@ exports.forgotPassword = async (req, res) => {
   try {
     const user = await userService.findUserByEmail(email);
     if (!user) {
-      return res.render('auth/forgot-password', {
-        error: 'Email không tồn tại!',
+      return res.render("auth/forgot-password", {
+        error: "Email không tồn tại!",
       });
     }
 
@@ -133,13 +136,13 @@ exports.forgotPassword = async (req, res) => {
     // Send email with reset link
     await userService.sendPasswordResetEmail(email, resetToken, req);
 
-    res.render('auth/forgot-password', {
-      message: 'Email đặt lại mật khẩu đã được gửi!',
+    res.render("auth/forgot-password", {
+      message: "Email đặt lại mật khẩu đã được gửi!",
     });
   } catch (err) {
     console.error(err);
-    res.render('auth/forgot-password', {
-      error: 'Đã xảy ra lỗi. Vui lòng thử lại!',
+    res.render("auth/forgot-password", {
+      error: "Đã xảy ra lỗi. Vui lòng thử lại!",
     });
   }
 };
@@ -149,20 +152,20 @@ exports.resetPassword = async (req, res) => {
   const { password, passwordConfirm } = req.body;
 
   try {
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const user = await userService.findUserByResetToken(hashedToken);
 
     if (!user) {
-      return res.render('auth/reset-password', {
-        error: 'Liên kết không hợp lệ hoặc đã hết hạn!',
+      return res.render("auth/reset-password", {
+        error: "Liên kết không hợp lệ hoặc đã hết hạn!",
       });
     }
 
     if (password !== passwordConfirm) {
-      return res.render('auth/reset-password', {
+      return res.render("auth/reset-password", {
         token,
-        error: 'Mật khẩu không khớp!',
+        error: "Mật khẩu không khớp!",
       });
     }
 
@@ -172,12 +175,12 @@ exports.resetPassword = async (req, res) => {
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    res.redirect('/login');
+    res.redirect("/login");
   } catch (err) {
     console.error(err);
-    res.render('auth/reset-password', {
+    res.render("auth/reset-password", {
       token,
-      error: 'Đã xảy ra lỗi. Vui lòng thử lại!',
+      error: "Đã xảy ra lỗi. Vui lòng thử lại!",
     });
   }
 };
@@ -198,8 +201,8 @@ exports.editProfile = async (req, res) => {
 
     const user = await userService.findUserById(userId);
     if (!user) {
-      return res.status(404).render('auth/profile', {
-        editProfile_message: 'User not found',
+      return res.status(404).render("auth/profile", {
+        editProfile_message: "User not found",
         success: false,
         user: req.body,
       });
@@ -210,7 +213,7 @@ exports.editProfile = async (req, res) => {
       try {
         avatarUrl = await userService.uploadAvatar(userId, req.file); // Wait for avatar upload
       } catch (err) {
-        return res.status(400).render('auth/profile', {
+        return res.status(400).render("auth/profile", {
           editProfile_message: err.message,
           success: false,
           user: req.body,
@@ -229,15 +232,15 @@ exports.editProfile = async (req, res) => {
       ...(avatarUrl && { avatarUrl }), // Add avatar URL if it's set
     });
 
-    res.status(200).render('auth/profile', {
-      editProfile_message: 'Profile updated successfully',
+    res.status(200).render("auth/profile", {
+      editProfile_message: "Profile updated successfully",
       success: true,
       user: updatedUser,
     });
   } catch (error) {
-    console.error('Error updating profile:', error);
-    res.status(500).render('auth/profile', {
-      editProfile_message: 'Error updating profile',
+    console.error("Error updating profile:", error);
+    res.status(500).render("auth/profile", {
+      editProfile_message: "Error updating profile",
       success: false,
       error: error.message,
       user: req.body,
@@ -252,8 +255,8 @@ exports.changePassword = async (req, res) => {
 
     // Kiểm tra mật khẩu mới và xác nhận mật khẩu
     if (newPassword !== confirmNewPassword) {
-      return res.status(400).render('auth/profile', {
-        changePassword_message: 'New password and confirmation do not match',
+      return res.status(400).render("auth/profile", {
+        changePassword_message: "New password and confirmation do not match",
         success: false,
       });
     }
@@ -261,8 +264,8 @@ exports.changePassword = async (req, res) => {
     // Tìm người dùng
     const user = await userService.findUserById(userId);
     if (!user) {
-      return res.status(404).render('auth/profile', {
-        changePassword_message: 'User not found',
+      return res.status(404).render("auth/profile", {
+        changePassword_message: "User not found",
         success: false,
       });
     }
@@ -270,8 +273,8 @@ exports.changePassword = async (req, res) => {
     // Kiểm tra mật khẩu hiện tại
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(401).render('auth/profile', {
-        changePassword_message: 'Current password is incorrect',
+      return res.status(401).render("auth/profile", {
+        changePassword_message: "Current password is incorrect",
         success: false,
       });
     }
@@ -280,14 +283,14 @@ exports.changePassword = async (req, res) => {
     user.password = newPassword;
     await user.save();
 
-    res.status(200).render('auth/profile', {
-      changePassword_message: 'Password changed successfully',
+    res.status(200).render("auth/profile", {
+      changePassword_message: "Password changed successfully",
       success: true,
     });
   } catch (error) {
-    console.error('Error changing password:', error);
-    res.status(500).render('auth/profile', {
-      changePassword_message: 'Error changing password',
+    console.error("Error changing password:", error);
+    res.status(500).render("auth/profile", {
+      changePassword_message: "Error changing password",
       success: false,
       error: error.message,
     });
