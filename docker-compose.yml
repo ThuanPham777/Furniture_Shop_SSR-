@@ -22,6 +22,20 @@ services:
     networks:
       - my_network
 
+  portainer:
+    container_name: portainerio
+    image: portainer/portainer-ce:latest
+    ports:
+      - "8000:8000"
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: always
+
 networks:
   my_network:
     driver: bridge
+
+volumes:
+  portainer_data: {}
