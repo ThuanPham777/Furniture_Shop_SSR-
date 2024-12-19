@@ -1,17 +1,59 @@
 version: "3.8"
+
 services:
-  furnitureapp:
-    container_name: furnitureapp
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.2
+    container_name: elasticsearch-furnitureapp
+    restart: always
+    environment:
+      - xpack.monitoring.enabled=true
+      - xpack.watcher.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - my_network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.10.0
+    container_name: logstash
+    depends_on:
+      - elasticsearch
     ports:
       - "5000:5000"
+      - "5044:5044"
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    networks:
+      - my_network
+
+  kibana:
+    container_name: kibana-furnitureapp
+    image: docker.elastic.co/kibana/kibana:7.17.2
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+    networks:
+      - my_network
+
+  portainer:
+    container_name: portainerio
+    image: portainer/portainer-ce:latest
+    ports:
+      - "8000:8000"
+      - "9999:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
     restart: always
     networks:
       - my_network
-    depends_on:
-      - redisdb
 
   redisdb:
     container_name: redisdb
@@ -22,20 +64,28 @@ services:
     networks:
       - my_network
 
-  portainer:
-    container_name: portainerio
-    image: portainer/portainer-ce:latest
+  furnitureapp:
+    container_name: furnitureapp
+    build:
+      context: .
+      dockerfile: ./Dockerfile
     ports:
-      - "8000:8000"
-      - "9000:9000"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
+      - "5002:5002"
     restart: always
+    networks:
+      - my_network
+    depends_on:
+      - redisdb
+      - elasticsearch
+      - logstash
+      - kibana
+    volumes:
+      - ./nodejs-logs:/src/logs
 
 networks:
   my_network:
     driver: bridge
 
 volumes:
+  elasticsearch_data: {}
   portainer_data: {}
