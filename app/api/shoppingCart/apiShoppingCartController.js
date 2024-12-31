@@ -1,8 +1,8 @@
 const cartService = require("../../cart/services/cartService");
 const productService = require("../../products/services/productService");
 const Redis = require("ioredis");
-// const redis = new Redis(); //localenv
-const redis = new Redis({ host: "redisdb" }); //docker-env
+const redis = new Redis(); //localenv
+// const redis = new Redis({ host: "redisdb" }); //docker-env
 var sessionId = " ";
 //Add a new item to the cart
 async function addCartItem(req, res) {

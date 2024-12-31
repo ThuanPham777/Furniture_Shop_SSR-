@@ -179,7 +179,7 @@
       if (result.url) {
         window.location.href = result.url; // Stripe Checkout URL
       } else {
-        alert("Failed to create Stripe payment session.");
+        alert("Failed to order.");
       }
     } catch (error) {
       console.error("Error creating payment session:", error);
