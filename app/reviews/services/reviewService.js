@@ -1,14 +1,8 @@
 const Review = require('../models/reviewModel');
 
-exports.getAllReviewsOfProduct = async (productId, filters, page, limit) => {
+exports.getAllReviewsOfProduct = async (productId, page, limit = 2) => {
   try {
     const query = { productId };
-
-    // Apply filters nếu có
-    if (filters.rating) query.rating = parseInt(filters.rating); // Lọc theo số sao
-    if (filters.keyword)
-      query.comment = { $regex: filters.keyword, $options: 'i' }; // Lọc theo keyword trong comment
-
     // Tính toán phân trang
     const skip = (page - 1) * limit;
     const totalReviews = await Review.countDocuments(query); // Tổng số đánh giá

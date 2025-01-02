@@ -57,13 +57,12 @@ const getProductById = async (req, res) => {
     }
 
     // Pagination logic for reviews
-    const reviewsPerPage = 10;
+    const reviewsPerPage = 2;
     const currentPage = parseInt(req.query.page) || 1; // Get the current page from the query params, default is 1
 
     // Gọi dịch vụ để lấy reviews với phân trang
     const { reviews, totalPages } = await reviewService.getAllReviewsOfProduct(
       id,
-      req.query, // Các bộ lọc (rating, keyword)
       currentPage, // Trang hiện tại
       reviewsPerPage // Số lượng reviews mỗi trang
     );
