@@ -49,7 +49,9 @@ module.exports = (passport) => {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL:
-          'https://furniture-shop-raqg.onrender.com/auth/google/callback',
+          process.env.NODE_ENV === 'production'
+            ? `${process.env.DOMAIN_HOST}/auth/google/callback`
+            : `${process.env.DOMAIN}/auth/google/callback`,
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
