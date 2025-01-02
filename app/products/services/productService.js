@@ -3,8 +3,6 @@ const getProducts = async (filters = {}, page = 1, limit = 6) => {
   try {
     const filterConditions = {};
 
-    // Kiểm tra giá trị filters và áp dụng điều kiện filter cho các trường hợp khác nhau
-
     // Price Filter (minPrice và maxPrice)
     if (filters.minPrice || filters.maxPrice) {
       const priceConditions = {};
@@ -24,7 +22,7 @@ const getProducts = async (filters = {}, page = 1, limit = 6) => {
       filterConditions.category = {
         $in: Array.isArray(filters.category)
           ? filters.category
-          : [filters.category], // Chắc chắn rằng category là một mảng
+          : [filters.category],
       };
     }
 

@@ -1,4 +1,6 @@
 const productService = require('../services/productService'); // Service xử lý logic về sản phẩm
+const categoryService = require('../../category/services/categoryService');
+const manufacturerService = require('../../manufacturer/services/manufacturerService');
 const reviewService = require('../../reviews/services/reviewService');
 const getAllProducts = async (req, res, next) => {
   try {
@@ -14,11 +16,15 @@ const getAllProducts = async (req, res, next) => {
       limit
     );
 
+    const categories = await categoryService.getAllCategoryNames();
+    const manufacturers = await manufacturerService.getAllManufacturerNames();
     // Render lại view với dữ liệu sản phẩm và filter
     res.render('shop/shop', {
       products,
       filters, // Truyền filters vào để render lại trạng thái filter
       totalPages,
+      categories,
+      manufacturers,
       currentPage: page,
     });
   } catch (error) {

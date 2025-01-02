@@ -51,8 +51,7 @@
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold">Category</h3>
                     <div class="flex flex-col">
-                        <% ['Lamps', 'Tables' , 'Chairs' , 'Dressers' , 'Cots' , 'Night Stands' , 'Sofas' , 'Shelves'
-                            ].forEach(category=> { %>
+                        <% categories.forEach(category=> { %>
                             <label>
                                 <input type="checkbox" name="category" value="<%= category %>"
                                     <%=filters?.category?.includes(category) ? 'checked' : '' %>
@@ -67,8 +66,7 @@
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold">Manufacturer</h3>
                     <div class="flex flex-col">
-                        <% ['IKEA', 'Vitra' , 'Herman Miller' , 'Knoll' , 'Haworth' , 'Maiden Home'
-                            ].forEach(manufacturer=> { %>
+                        <% manufacturers.forEach(manufacturer=> { %>
                             <label>
                                 <input type="checkbox" name="manufacturer" value="<%= manufacturer %>"
                                     <%=filters?.manufacturer?.includes(manufacturer) ? 'checked' : '' %>
