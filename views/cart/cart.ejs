@@ -129,7 +129,6 @@
     }
 
     // Function to remove an item from the cart
-    // Function to remove an item from the cart
     async function removeFromCart(productId) {
         try {
             const response = await fetch(`/api/cart/delete/${productId}`, { method: 'DELETE' });

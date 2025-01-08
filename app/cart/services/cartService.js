@@ -1,10 +1,10 @@
-const Cart = require("../models/cartModel");
-const productService = require("../../products/services/productService");
+const Cart = require('../models/cartModel');
+const productService = require('../../products/services/productService');
 // Add a new item to the cart (if not already in the cart).
 async function addCartItem(userId, productId, quantity) {
-  console.log("object helu");
+  console.log('object helu');
   if (quantity < 1) {
-    throw new Error("Quantity must be at least 1");
+    throw new Error('Quantity must be at least 1');
   }
 
   // Check if the item already exists in the cart
@@ -38,11 +38,10 @@ async function addCartItem(userId, productId, quantity) {
 }
 
 //Update the quantity of a cart item for a specific user
-
 async function updateCartItemQuantity(userId, productId, quantity) {
   // Validate the input quantity
   if (quantity < 1) {
-    throw new Error("Quantity must be at least 1");
+    throw new Error('Quantity must be at least 1');
   }
 
   const product = await productService.getProductById(productId);
@@ -62,7 +61,7 @@ async function updateCartItemQuantity(userId, productId, quantity) {
 
   // If no item is found, return null
   if (!updatedCartItem) {
-    throw new Error("Cart item not found");
+    throw new Error('Cart item not found');
   }
 
   return updatedCartItem;
@@ -85,11 +84,12 @@ async function deleteAllCartItems(userId) {
 
 async function getCartByUserId(userId) {
   return await Cart.find({ userId })
-    .populate("productId") // Populate product details
+    .populate('productId') // Populate product details
     .lean();
 }
+
 async function calculateCartTotals(userId) {
-  const cartItems = await Cart.find({ userId }).populate("productId");
+  const cartItems = await Cart.find({ userId }).populate('productId');
 
   const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const totalAmount = cartItems.reduce((sum, item) => {

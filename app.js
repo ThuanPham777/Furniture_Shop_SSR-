@@ -83,7 +83,7 @@ app.use(
   session({
     secret: process.env.SECRET_KEY,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
       secure: false, // Đặt thành `true` nếu dùng HTTPS
       maxAge: 3600000, // Thời gian tồn tại cookie (1 giờ)

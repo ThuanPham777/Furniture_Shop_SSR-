@@ -1,11 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const apiShoppingCartController = require('./apiShoppingCartController');
-const {
-  ensureAuthenticated,
-} = require('../../../middleware/auth/ensureAuthenticated');
 
-router.use(ensureAuthenticated);
 // Add a new item to the cart
 router.post('/add', apiShoppingCartController.addCartItem);
 
