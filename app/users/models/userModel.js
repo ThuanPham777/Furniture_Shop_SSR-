@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema(
     province: { type: String },
     city: { type: String },
     country: { type: String, default: 'Vietnam' },
+    isBanned: { type: Boolean, default: false },
     password: {
       type: String,
       required: function () {

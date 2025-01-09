@@ -27,6 +27,13 @@ module.exports = (passport) => {
             });
           }
 
+          if (!user.isBanned) {
+            return done(null, false, {
+              message:
+                'Tài khoản đã bị khóa do một số lỗi gì đó. Vui lòng liên hệ admin để mở khóa.',
+            });
+          }
+
           // So sánh mật khẩu
           const isMatch = await bcrypt.compare(password, user.password);
           if (!isMatch) {
