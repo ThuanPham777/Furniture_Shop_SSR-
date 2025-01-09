@@ -127,14 +127,6 @@ exports.sendPasswordResetEmail = async (email, resetToken, req) => {
   await transporter.sendMail(message);
 };
 
-// Tìm user qua activation token
-exports.findUserByActivationToken = async (hashedToken) => {
-  return await User.findOne({
-    activationToken: hashedToken,
-    activationTokenExpires: { $gt: Date.now() }, // Token phải còn hiệu lực
-  });
-};
-
 /**
  * Find user by reset token and ensure the token is still valid.
  * @param {string} hashedToken - The hashed reset password token.

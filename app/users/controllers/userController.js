@@ -4,7 +4,8 @@ const userService = require('../services/userService'); // Import user service
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const apiShoppingCartController = require('../../api/shoppingCart/apiShoppingCartController');
-
+const Redis = require('ioredis');
+const redis = new Redis(); //localenv
 exports.signup = async (req, res) => {
   const { username, email, password, passwordConfirm } = req.body;
 
@@ -29,11 +30,21 @@ exports.signup = async (req, res) => {
       });
     }
 
-    const user = await userService.createUser({ username, email, password });
+    // Tạo activation token
+    const activationToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(activationToken)
+      .digest('hex');
 
-    // Tạo token và lưu vào cơ sở dữ liệu
-    const activationToken = user.createActivationToken();
-    await user.save();
+    // Lưu thông tin người dùng vào Redis
+    const userData = JSON.stringify({
+      username,
+      email,
+      password,
+    });
+
+    await redis.setex(hashedToken, 600, userData); // Lưu trong 10 phút
 
     // Gửi email kích hoạt
     await userService.sendActivationEmail(email, activationToken, req);
@@ -92,27 +103,39 @@ exports.activateAccount = async (req, res) => {
   const { token } = req.params;
 
   try {
-    // Hash lại token từ URL để so khớp với cơ sở dữ liệu
+    // Hash lại token từ URL
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    const user = await userService.findUserByActivationToken(hashedToken);
+    // Tìm thông tin người dùng trong Redis bằng token
+    const userData = await redis.get(hashedToken);
 
-    if (!user || user.activationTokenExpires < Date.now()) {
+    if (!userData) {
       return res.status(400).json({
         success: false,
         error: 'Liên kết kích hoạt không hợp lệ hoặc đã hết hạn!',
       });
     }
 
-    // Kích hoạt tài khoản
-    user.isActive = true;
-    user.activationToken = undefined; // Xóa token sau khi kích hoạt
-    user.activationTokenExpires = undefined;
-    await user.save();
+    // Parse dữ liệu người dùng từ Redis
+    const user = JSON.parse(userData);
+
+    // Lưu người dùng vào database
+    const savedUser = await userService.createUser({
+      username: user.username,
+      email: user.email,
+      password: user.password, // Đã được hash trước khi lưu vào Redis
+    });
+
+    // Xóa token khỏi Redis sau khi kích hoạt thành công
+    await redis.del(hashedToken);
 
     return res.status(200).json({
       success: true,
       message: 'Tài khoản của bạn đã được kích hoạt thành công!',
+      user: {
+        username: savedUser.username,
+        email: savedUser.email,
+      },
     });
   } catch (err) {
     console.error(err);

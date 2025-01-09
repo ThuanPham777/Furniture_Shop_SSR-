@@ -19,15 +19,7 @@ module.exports = (passport) => {
             return done(null, false, { message: 'Email không tồn tại' });
           }
 
-          // Kiểm tra tài khoản đã kích hoạt chưa
-          if (!user.isActive) {
-            return done(null, false, {
-              message:
-                'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt tài khoản.',
-            });
-          }
-
-          if (!user.isBanned) {
+          if (user.isBanned) {
             return done(null, false, {
               message:
                 'Tài khoản đã bị khóa do một số lỗi gì đó. Vui lòng liên hệ admin để mở khóa.',
