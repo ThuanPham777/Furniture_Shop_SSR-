@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
 const userSchema = new mongoose.Schema(
   {
     username: { type: String, required: true },
@@ -21,9 +20,6 @@ const userSchema = new mongoose.Schema(
         return !this.googleId; // Password is required only if googleId is not present
       },
     },
-    resetPasswordToken: String,
-    resetPasswordExpires: Date,
-
     googleId: { type: String, unique: true, sparse: true }, // For Google OAuth
   },
   {
@@ -37,16 +33,5 @@ userSchema.pre('save', async function (next) {
   this.passwordConfirm = undefined; // Không lưu trường này
   next();
 });
-
-// Tạo token đặt lại mật khẩu
-userSchema.methods.createPasswordResetToken = function () {
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  this.resetPasswordToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-  this.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // Token expires in 10 minutes
-  return resetToken;
-};
 
 module.exports = mongoose.model('User', userSchema);

@@ -126,22 +126,3 @@ exports.sendPasswordResetEmail = async (email, resetToken, req) => {
 
   await transporter.sendMail(message);
 };
-
-/**
- * Find user by reset token and ensure the token is still valid.
- * @param {string} hashedToken - The hashed reset password token.
- * @returns {Promise<User|null>} - The user if found and the token is valid, otherwise null.
- */
-exports.findUserByResetToken = async (hashedToken) => {
-  try {
-    const user = await User.findOne({
-      resetPasswordToken: hashedToken,
-      resetPasswordExpires: { $gt: Date.now() }, // Ensure the token is not expired
-    });
-
-    return user;
-  } catch (error) {
-    console.error('Error finding user by reset token:', error);
-    throw new Error('Unable to find user with the provided reset token.');
-  }
-};

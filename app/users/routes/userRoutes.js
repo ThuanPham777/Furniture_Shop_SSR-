@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const userService = require('../services/userService');
 const crypto = require('crypto');
 const passport = require('passport');
 const upload = require('../../../config/upload');
+const Redis = require('ioredis');
+const redis = new Redis(); //localenv
 
 const {
   ensureAuthenticated,
@@ -37,19 +38,27 @@ router.get('/forgot-password', (req, res) => {
 router.post('/forgot-password', userController.forgotPassword);
 
 // GET: Reset Password Form
+// Hiển thị form đặt lại mật khẩu
 router.get('/reset-password/:token', async (req, res) => {
   const { token } = req.params;
-  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-  const user = await userService.findUserByResetToken(hashedToken);
+  try {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const userData = await redis.get(`resetToken:${hashedToken}`);
 
-  if (!user) {
-    return res.render('auth/reset-password', {
-      error: 'Liên kết không hợp lệ hoặc đã hết hạn!',
+    if (!userData) {
+      return res.render('auth/reset-password', {
+        error: 'Liên kết không hợp lệ hoặc đã hết hạn!',
+      });
+    }
+
+    res.render('auth/reset-password', { token, error: null });
+  } catch (err) {
+    console.error(err);
+    res.render('auth/reset-password', {
+      error: 'Đã xảy ra lỗi. Vui lòng thử lại!',
     });
   }
-
-  res.render('auth/reset-password', { token, error: null });
 });
 
 router.post('/reset-password/:token', userController.resetPassword);

@@ -158,8 +158,15 @@ exports.forgotPassword = async (req, res) => {
     }
 
     // Generate reset token
-    const resetToken = user.createPasswordResetToken();
-    await user.save({ validateBeforeSave: false });
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+    // Lưu token vào Redis với TTL (10 phút)
+    const userData = JSON.stringify({ userId: user.id, email: user.email });
+    await redis.setex(`resetToken:${hashedToken}`, 600, userData); // 600 giây = 10 phút
 
     // Send email with reset link
     await userService.sendPasswordResetEmail(email, resetToken, req);
@@ -182,13 +189,15 @@ exports.resetPassword = async (req, res) => {
   try {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    const user = await userService.findUserByResetToken(hashedToken);
-
-    if (!user) {
+    // Kiểm tra token trong Redis
+    const userData = await redis.get(`resetToken:${hashedToken}`);
+    if (!userData) {
       return res.render('auth/reset-password', {
         error: 'Liên kết không hợp lệ hoặc đã hết hạn!',
       });
     }
+
+    const { userId } = JSON.parse(userData);
 
     if (password !== passwordConfirm) {
       return res.render('auth/reset-password', {
@@ -197,11 +206,19 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // Update password (hash password in userSechema)
+    // Tìm người dùng và cập nhật mật khẩu
+    const user = await userService.findUserById(userId);
+    if (!user) {
+      return res.render('auth/reset-password', {
+        error: 'Người dùng không tồn tại!',
+      });
+    }
+
     user.password = password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
     await user.save();
+
+    // Xóa token khỏi Redis
+    await redis.del(`resetToken:${hashedToken}`);
 
     res.redirect('/login');
   } catch (err) {
