@@ -6,6 +6,12 @@ const bcrypt = require('bcryptjs');
 const apiShoppingCartController = require('../../api/shoppingCart/apiShoppingCartController');
 const Redis = require('ioredis');
 const redis = new Redis(); //localenv
+// Hàm kiểm tra độ phức tạp mật khẩu
+const isValidPassword = (password) => {
+  const passwordRegex =
+    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+  return passwordRegex.test(password);
+};
 exports.signup = async (req, res) => {
   const { username, email, password, passwordConfirm } = req.body;
 
@@ -21,9 +27,8 @@ exports.signup = async (req, res) => {
       return res.render('auth/signup', { error: 'Email đã được sử dụng' });
     }
 
-    const passwordRegex =
-      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-    if (!passwordRegex.test(password)) {
+    // Kiểm tra độ phức tạp mật khẩu bằng hàm phụ
+    if (!isValidPassword(password)) {
       return res.render('auth/signup', {
         error:
           'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
@@ -302,6 +307,15 @@ exports.changePassword = async (req, res) => {
     if (newPassword !== confirmNewPassword) {
       return res.status(400).render('auth/profile', {
         changePassword_message: 'New password and confirmation do not match',
+        success: false,
+      });
+    }
+
+    // Kiểm tra độ phức tạp mật khẩu bằng hàm phụ
+    if (!isValidPassword(newPassword)) {
+      return res.status(400).render('auth/profile', {
+        changePassword_message:
+          'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt',
         success: false,
       });
     }
