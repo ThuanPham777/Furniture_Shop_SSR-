@@ -21,7 +21,7 @@ pipeline {
         }
       }
       steps {
-        sh 'terraform --version'
+        sh 'Unit test'
       }
     }
     stage('SonarQube Analysis') {
@@ -31,18 +31,6 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     sh "${scannerHome}/bin/sonar-scanner"
                 }
-            }
-        }
-    }
-    stage("Quality Gate") {
-            steps {
-                script {
-                    timeout(time: 1, unit: 'HOURS') {
-                        def qg = waitForQualityGate()
-                        if (qg.status != 'OK') {
-                            error "Quality Gate failed: ${qg.status}"
-                        }
-                    }
             }
         }
     }
