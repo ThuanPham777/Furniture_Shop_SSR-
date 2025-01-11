@@ -34,22 +34,22 @@ pipeline {
             }
         }
     }
-    stage('Build image') {
-      steps {
-          script {
-            sh 'docker build -t ktei8htop15122004/furniture-app .'
-          }
-      }
-    }
+    // stage('Build image') {
+    //   steps {
+    //       script {
+    //         sh 'docker build -t ktei8htop15122004/furniture-app .'
+    //       }
+    //   }
+    // }
 
-    stage('Pushing Image') {
-      steps {
-          script {
-            sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-            sh 'docker push ktei8htop15122004/furniture-app'
-          }
-      }
-    }
+    // stage('Pushing Image') {
+    //   steps {
+    //       script {
+    //         sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+    //         sh 'docker push ktei8htop15122004/furniture-app'
+    //       }
+    //   }
+    // }
     
   }
 }
