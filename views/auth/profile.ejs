@@ -1,7 +1,8 @@
 <div class="w-full h-full flex flex-col items-center py-8 bg-white">
-    <div class="w-11/12 flex flex-col md:flex-row justify-between items-center gap-8">
+    <div class="w-11/12 flex flex-col <%= user.googleId ? 'items-center' : 'md:flex-row justify-between' %> gap-8">
         <!-- Left: Edit Profile -->
-        <div class="w-full md:w-1/2 p-6 bg-white shadow-lg rounded-lg mb-6 md:mb-0">
+        <div
+            class="<%= user.googleId ? 'w-full md:w-1/2' : 'w-full md:w-1/2' %> p-6 bg-white shadow-lg rounded-lg mb-6 md:mb-0">
             <h1 class="text-2xl font-semibold text-center text-gray-800 mb-6">Edit Profile</h1>
             <form method="POST" action="/profile/edit" enctype="multipart/form-data" class="space-y-4">
                 <!-- Display general message for Edit Profile -->
@@ -87,35 +88,39 @@
         </div>
 
         <!-- Right: Change Password -->
-        <div class="w-full md:w-1/2 p-6 bg-white shadow-lg rounded-lg">
-            <h1 class="text-2xl font-semibold text-center text-gray-800 mb-6">Change Password</h1>
-            <form method="POST" action="/profile/change-password" class="space-y-4">
-                <!-- Display general message for Change Password -->
-                <% if (typeof changePassword_message !=='undefined' && changePassword_message) { %>
-                    <div
-                        class="<%= typeof success !== 'undefined' && success ? 'bg-green-500' : 'bg-red-500' %> text-white p-4 rounded-md mb-4">
-                        <%= changePassword_message %>
-                    </div>
-                    <% } %>
+        <% if (!user.googleId) { %>
+            <div class="w-full md:w-1/2 p-6 bg-white shadow-lg rounded-lg ">
+                <h1 class="text-2xl font-semibold text-center text-gray-800 mb-6">Change Password</h1>
+                <form method="POST" action="/profile/change-password" class="space-y-4">
+                    <!-- Display general message for Change Password -->
+                    <% if (typeof changePassword_message !=='undefined' && changePassword_message) { %>
+                        <div
+                            class="<%= typeof success !== 'undefined' && success ? 'bg-green-500' : 'bg-red-500' %> text-white p-4 rounded-md mb-4">
+                            <%= changePassword_message %>
+                        </div>
+                        <% } %>
 
-                        <% ['currentPassword', 'newPassword' , 'confirmNewPassword' ].forEach((field)=> { %>
-                            <div class="relative">
-                                <label for="<%= field %>" class="block text-sm font-medium text-gray-700">
-                                    <%= field==='currentPassword' ? 'Current Password' : field==='newPassword' ? 'New Password'
-                                        : 'Confirm New Password' %>
-                                </label>
-                                <input type="password" id="<%= field %>" name="<%= field %>" class="w-full border px-4 py-2 rounded-md pr-10" />
-                                <i id="<%= field %>Toggle" class="fa fa-eye-slash absolute right-3 top-9 text-gray-500 cursor-pointer"
-                                    aria-hidden="true" onclick="togglePasswordVisibility('<%= field %>')"></i>
-                            </div>
-                            <% }); %>
+                            <% ['currentPassword', 'newPassword' , 'confirmNewPassword' ].forEach((field)=> { %>
+                                <div class="relative">
+                                    <label for="<%= field %>" class="block text-sm font-medium text-gray-700">
+                                        <%= field==='currentPassword' ? 'Current Password' : field==='newPassword'
+                                            ? 'New Password' : 'Confirm New Password' %>
+                                    </label>
+                                    <input type="password" id="<%= field %>" name="<%= field %>"
+                                        class="w-full border px-4 py-2 rounded-md pr-10" />
+                                    <i id="<%= field %>Toggle"
+                                        class="fa fa-eye-slash absolute right-3 top-9 text-gray-500 cursor-pointer"
+                                        aria-hidden="true" onclick="togglePasswordVisibility('<%= field %>')"></i>
+                                </div>
+                                <% }); %>
 
-                                <button type="submit"
-                                    class="w-full bg-lime-500 text-white py-2 px-4 rounded-md hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75 mt-4">
-                                    Change Password
-                                </button>
-            </form>
-        </div>
+                                    <button type="submit"
+                                        class="w-full bg-lime-500 text-white py-2 px-4 rounded-md hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75 mt-4">
+                                        Change Password
+                                    </button>
+                </form>
+            </div>
+            <% } %>
     </div>
 </div>
 

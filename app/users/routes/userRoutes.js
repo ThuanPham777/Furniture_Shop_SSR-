@@ -6,6 +6,7 @@ const passport = require('passport');
 const upload = require('../../../config/upload');
 const Redis = require('ioredis');
 const redis = new Redis(); //localenv
+const apiShoppingCartController = require('../../api/shoppingCart/apiShoppingCartController');
 
 const {
   ensureAuthenticated,
@@ -70,14 +71,17 @@ router.get(
 );
 
 // Google Callback Route
-router.get(
-  '/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    // Successful login, redirect to home
-    res.redirect('/');
-  }
-);
+router.get('/auth/google/callback', (req, res) => {
+  const oldSessionId = req.sessionID; // Lưu sessionId cũ TRƯỚC khi xác thực
+  passport.authenticate('google', { failureRedirect: '/login' })(
+    req,
+    res,
+    () => {
+      apiShoppingCartController.syncCartAfterLogin(req, res, oldSessionId);
+      res.redirect('/');
+    }
+  );
+});
 
 router.post(
   '/profile/edit',
