@@ -21,7 +21,7 @@ pipeline {
         }
       }
       steps {
-        sh 'Unit test'
+        ech 'Unit test'
       }
     }
     stage('SonarQube Analysis') {
