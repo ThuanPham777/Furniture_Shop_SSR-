@@ -1,14 +1,14 @@
-const cartService = require('../../cart/services/cartService');
-const productService = require('../../products/services/productService');
-const Redis = require('ioredis');
-const redis = new Redis(); //localenv
-// const redis = new Redis({ host: "redisdb" }); //docker-env
+const cartService = require("../../cart/services/cartService");
+const productService = require("../../products/services/productService");
+const Redis = require("ioredis");
+// const redis = new Redis(); //localenv
+const redis = new Redis({ host: "redisdb" }); //docker-env
 //Add a new item to the cart
 async function addCartItem(req, res) {
   const userId = req.user?._id;
   const { productId, quantity } = req.body;
   const sessionId = req.sessionID;
-  console.log('heluuu');
+  console.log("heluuu");
   console.log(req.body);
   console.log(req.user?._id);
   console.log(sessionId);
@@ -23,7 +23,7 @@ async function addCartItem(req, res) {
         res.status(400).json({ message: cartItem.error });
       } else {
         res.status(200).json({
-          message: 'Item added to cart successfully',
+          message: "Item added to cart successfully",
           cartItem,
         });
       }
@@ -42,10 +42,10 @@ async function addCartItem(req, res) {
         cart.push({ productId, quantity });
       }
 
-      await redis.set(cartKey, JSON.stringify(cart), 'EX', 3600); // TTL 1 giờ
+      await redis.set(cartKey, JSON.stringify(cart), "EX", 3600); // TTL 1 giờ
       return res
         .status(200)
-        .json({ message: 'Item added to cart successfully (cached)' });
+        .json({ message: "Item added to cart successfully (cached)" });
     }
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -53,7 +53,7 @@ async function addCartItem(req, res) {
 }
 async function syncCartAfterLogin(req, res, oldSessionId) {
   const userId = req.user._id; // ID người dùng đã đăng nhập
-  console.log('oldSessionId: ', oldSessionId);
+  console.log("oldSessionId: ", oldSessionId);
   const cartKey = `cart:${oldSessionId}`;
 
   try {
@@ -67,7 +67,7 @@ async function syncCartAfterLogin(req, res, oldSessionId) {
       await redis.del(cartKey);
     }
   } catch (error) {
-    console.error('Error syncing cart:', error.message);
+    console.error("Error syncing cart:", error.message);
   }
 }
 
@@ -81,7 +81,7 @@ async function updateCartItem(req, res) {
   if (!quantity || quantity < 1) {
     return res
       .status(400)
-      .json({ message: 'Quantity must be a positive number' });
+      .json({ message: "Quantity must be a positive number" });
   }
 
   try {
@@ -103,7 +103,7 @@ async function updateCartItem(req, res) {
       }
 
       if (!updatedCartItem) {
-        return res.status(404).json({ message: 'Cart item not found' });
+        return res.status(404).json({ message: "Cart item not found" });
       }
 
       const product = await productService.getProductById(productId);
@@ -114,7 +114,7 @@ async function updateCartItem(req, res) {
       totalAmount = dbTotalAmount;
 
       res.status(200).json({
-        message: 'Cart item quantity updated successfully',
+        message: "Cart item quantity updated successfully",
         updatedCartItem: {
           price: (product.salePrice || product.price) * quantity,
           quantity,
@@ -134,9 +134,9 @@ async function updateCartItem(req, res) {
       if (productIndex > -1) {
         // Cập nhật số lượng sản phẩm
         cart[productIndex].quantity = quantity;
-        await redis.set(cartKey, JSON.stringify(cart), 'EX', 3600);
+        await redis.set(cartKey, JSON.stringify(cart), "EX", 3600);
       } else {
-        return res.status(404).json({ message: 'Cart item not found' });
+        return res.status(404).json({ message: "Cart item not found" });
       }
 
       // Lấy thông tin chi tiết sản phẩm và tính toán tổng giá trị
@@ -161,7 +161,7 @@ async function updateCartItem(req, res) {
       );
 
       res.status(200).json({
-        message: 'Cart item quantity updated successfully',
+        message: "Cart item quantity updated successfully",
         updatedCartItem: {
           price: (product.salePrice || product.price) * quantity,
           quantity,
@@ -171,8 +171,8 @@ async function updateCartItem(req, res) {
       });
     }
   } catch (error) {
-    console.error('Error updating cart item:', error);
-    res.status(500).json({ message: 'Failed to update cart item' });
+    console.error("Error updating cart item:", error);
+    res.status(500).json({ message: "Failed to update cart item" });
   }
 }
 
@@ -192,7 +192,7 @@ async function deleteCartItem(req, res) {
       const deletedItem = await cartService.deleteCartItem(userId, productId);
 
       if (!deletedItem) {
-        return res.status(404).json({ message: 'Cart item not found' });
+        return res.status(404).json({ message: "Cart item not found" });
       }
 
       // Recalculate totals after item deletion
@@ -208,11 +208,11 @@ async function deleteCartItem(req, res) {
     } else {
       // Người dùng chưa đăng nhập - thao tác với Redis
       const cartKey = `cart:${sessionId}`;
-      console.log('cartKey=' + cartKey);
+      console.log("cartKey=" + cartKey);
       const existingCart = await redis.get(cartKey);
 
       if (!existingCart) {
-        return res.status(404).json({ message: 'No cart found' });
+        return res.status(404).json({ message: "No cart found" });
       }
 
       let cart = JSON.parse(existingCart);
@@ -221,14 +221,14 @@ async function deleteCartItem(req, res) {
       );
 
       if (productIndex === -1) {
-        return res.status(404).json({ message: 'Cart item not found' });
+        return res.status(404).json({ message: "Cart item not found" });
       }
 
       // Xóa sản phẩm khỏi giỏ hàng
       cart.splice(productIndex, 1);
 
       // Cập nhật lại giỏ hàng vào Redis với TTL 1 giờ
-      await redis.set(cartKey, JSON.stringify(cart), 'EX', 3600);
+      await redis.set(cartKey, JSON.stringify(cart), "EX", 3600);
 
       // Tính lại tổng số lượng và tổng giá trị giỏ hàng
       const cartItemsDetails = await Promise.all(
@@ -251,14 +251,14 @@ async function deleteCartItem(req, res) {
 
     // Trả về kết quả đồng nhất cho cả hai trường hợp
     res.status(200).json({
-      message: 'Cart item deleted successfully',
+      message: "Cart item deleted successfully",
       cartItems,
       totalQuantity,
       totalAmount,
     });
   } catch (error) {
-    console.error('Error deleting cart item:', error);
-    res.status(500).json({ message: 'Failed to delete cart item' });
+    console.error("Error deleting cart item:", error);
+    res.status(500).json({ message: "Failed to delete cart item" });
   }
 }
 
@@ -277,7 +277,7 @@ async function deleteAllCartItems(req, res) {
         await cartService.calculateCartTotals(userId);
 
       return res.status(200).json({
-        message: 'All cart items deleted successfully',
+        message: "All cart items deleted successfully",
         cartItems,
         totalQuantity,
         totalAmount,
@@ -295,14 +295,14 @@ async function deleteAllCartItems(req, res) {
       const totalAmount = 0;
 
       return res.status(200).json({
-        message: 'All cart items deleted successfully (cached)',
+        message: "All cart items deleted successfully (cached)",
         cartItems,
         totalQuantity,
         totalAmount,
       });
     }
   } catch (error) {
-    console.error('Error deleting all cart items:', error);
+    console.error("Error deleting all cart items:", error);
     res.status(400).json({ message: error.message });
   }
 }

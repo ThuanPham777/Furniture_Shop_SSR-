@@ -1,12 +1,13 @@
-const cartService = require('../services/cartService');
-const productService = require('../../products/services/productService');
-const Redis = require('ioredis');
-const redis = new Redis();
+const cartService = require("../services/cartService");
+const productService = require("../../products/services/productService");
+const Redis = require("ioredis");
+// const redis = new Redis();
+const redis = new Redis({ host: "redisdb" }); //docker-env
 exports.getAllCart = async (req, res) => {
   const userId = req.user?._id; // Kiểm tra người dùng đã đăng nhập
   const sessionId = req.sessionID;
-  console.log('sessionId in render=' + sessionId);
-  console.log('userId', userId);
+  console.log("sessionId in render=" + sessionId);
+  console.log("userId", userId);
 
   try {
     let cartItems = [];
@@ -19,7 +20,7 @@ exports.getAllCart = async (req, res) => {
 
       // Kiểm tra nếu giỏ hàng trống
       if (cartItems.length === 0) {
-        return res.render('cart/cart', {
+        return res.render("cart/cart", {
           cartItems,
           totalQuantity: 0,
           totalAmount: 0,
@@ -65,14 +66,14 @@ exports.getAllCart = async (req, res) => {
     }
 
     // Render giỏ hàng
-    res.render('cart/cart', {
+    res.render("cart/cart", {
       cartItems,
       totalQuantity,
       totalAmount,
       cartEmpty: cartItems.length === 0,
     });
   } catch (error) {
-    console.error('Error fetching cart:', error);
-    res.status(500).send('Error fetching cart');
+    console.error("Error fetching cart:", error);
+    res.status(500).send("Error fetching cart");
   }
 };
